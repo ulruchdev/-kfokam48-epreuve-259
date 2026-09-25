@@ -3,10 +3,12 @@ package com.kfokam48.attendance.service;
 import com.kfokam48.attendance.domain.CourseSession;
 import com.kfokam48.attendance.domain.Exercise;
 import com.kfokam48.attendance.domain.ExerciseStatus;
+import com.kfokam48.attendance.domain.Review;
 import com.kfokam48.attendance.domain.Student;
 import com.kfokam48.attendance.repository.AttendanceRepository;
 import com.kfokam48.attendance.repository.CourseSessionRepository;
 import com.kfokam48.attendance.repository.ExerciseRepository;
+import com.kfokam48.attendance.repository.ReviewRepository;
 import com.kfokam48.attendance.repository.StudentRepository;
 import com.kfokam48.attendance.web.dto.Dto;
 import com.kfokam48.attendance.web.erreur.BusinessExceptions.*;
@@ -26,15 +28,17 @@ public class ExerciseService {
     private final StudentRepository students;
     private final AttendanceRepository attendances;
     private final ExerciseRepository exercises;
+    private final ReviewRepository reviews;
     private final ReviewAssignmentService assignment;
 
     public ExerciseService(CourseSessionRepository sessions, StudentRepository students,
                            AttendanceRepository attendances, ExerciseRepository exercises,
-                           ReviewAssignmentService assignment) {
+                           ReviewRepository reviews, ReviewAssignmentService assignment) {
         this.sessions = sessions;
         this.students = students;
         this.attendances = attendances;
         this.exercises = exercises;
+        this.reviews = reviews;
         this.assignment = assignment;
     }
 
@@ -75,7 +79,30 @@ public class ExerciseService {
                 .toList();
     }
 
+    /** EF9 / RG7 (Q8): the author sees grade and comment, never who reviewed. */
+    @Transactional(readOnly = true)
+    public List<Dto.ExerciseWithReviewResponse> listByStudent(Long studentId, Long sessionId) {
+        Student author = loadStudent(studentId);
+        List<Exercise> own = exercises.findByStudentId(studentId).stream()
+                .filter(e -> sessionId == null || e.getSessionId().equals(sessionId))
+                .toList();
+        Map<Long, Review> reviewByExercise = own.isEmpty() ? Map.of()
+                : reviews.findByExerciseIdIn(own.stream().map(Exercise::getId).toList()).stream()
+                        .collect(Collectors.toMap(Review::getExerciseId, review -> review));
+        return own.stream()
+                .map(e -> new Dto.ExerciseWithReviewResponse(e.getId(), e.getSessionId(), author.getId(),
+                        author.getNom(), e.getLien(), e.getStatus().code(), receivedReview(reviewByExercise.get(e.getId()))))
+                .toList();
+    }
+
     // ---------- private steps ----------
+
+    /** RG7: only the grade and the comment leave the server, and only once rendered. */
+    private Dto.ReceivedReviewResponse receivedReview(Review review) {
+        return review != null && review.isRendered()
+                ? new Dto.ReceivedReviewResponse(review.getNote(), review.getCommentaire())
+                : null;
+    }
 
     /** Only absolute http(s) links with a host are accepted (LIEN_INVALIDE). */
     private void requireValidLink(String link) {

@@ -30,4 +30,11 @@ public class ExerciseController {
     public List<Dto.ExerciseResponse> sessionExercises(@PathVariable Long id) {
         return exerciseService.listBySession(id);
     }
+
+    /** [LIBRE] GET /api/etudiants/{etudiantId}/exercices?sessionId= — RG7: never the reviewer. */
+    @GetMapping("/etudiants/{etudiantId}/exercices")
+    public List<Dto.ExerciseWithReviewResponse> studentExercises(@PathVariable Long etudiantId,
+                                                                 @RequestParam(required = false) Long sessionId) {
+        return exerciseService.listByStudent(etudiantId, sessionId);
+    }
 }
