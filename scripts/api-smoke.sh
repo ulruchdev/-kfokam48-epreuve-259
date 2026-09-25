@@ -92,12 +92,14 @@ call PUT /api/relectures/$REVIEW '{"note":17,"commentaire":"Amended","relecteurI
 call POST /api/relectures/999999 '{"note":15,"commentaire":"x"}';                     check "unknown review" 404 RELECTURE_INCONNUE
 call PUT /api/exercices/$EXERCISE '{"lien":"https://github.com/smoke/ex-v3"}';         check "replace link after review" 409 RELECTURE_COMMENCEE
 call GET "/api/etudiants/1/exercices?sessionId=$SESSION";          check "student 1 sees grade" 200
-[ "$(field "d[0]['relecture']['note']")" = "17" ] && [ "$(field "'relecteurId' in str(d)")" = "False" ] \
-  && echo "        grade 17 visible, reviewer never exposed (RG7)" || { FAIL=$((FAIL + 1)); echo "  FAIL  RG7 view: $BODY"; }
+[ "$(field "d[0]['evaluation']['note']")" = "17.0" ] && [ "$(field "d[0]['evaluation']['provisoire']")" = "True" ] \
+  && [ "$(field "'relecteurId' in str(d)")" = "False" ] \
+  && echo "        retained grade 17 provisional (one peer present, RG16), reviewer never exposed (RG7)" \
+  || { FAIL=$((FAIL + 1)); echo "  FAIL  RG7/RG16 view: $BODY"; }
 
 echo "== Dashboard (EF6, Q16)"
 call GET "/api/tableau?promotionId=$PROMO";                        check "dashboard" 200
-echo "        $(field "'; '.join(f\"{r['nom']}: presences={r['presences']} (formateur={r['presencesFormateur']}) depots={r['exercicesDeposes']} moyenne={r['moyenne']} a_relire={r['relecturesEnAttente']}\" for r in d)")"
+echo "        $(field "'; '.join(f\"{r['nom']}: presences={r['presences']} (formateur={r['presencesFormateur']}) depots={r['exercicesDeposes']} moyenne={r['moyenne']}{' provisoire' if r['moyenneProvisoire'] else ''} a_relire={r['relecturesEnAttente']}\" for r in d)")"
 call GET "/api/tableau?promotionId=999";                           check "dashboard, unknown promotion" 404 PROMOTION_INCONNUE
 call GET /api/tableau;                                             check "dashboard without promotionId" 400 PARAMETRE_MANQUANT
 

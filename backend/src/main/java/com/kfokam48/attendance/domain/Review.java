@@ -11,9 +11,12 @@ public class Review {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /** RG5 (Q6): unique per exercise. */
-    @Column(name = "exercice_id", nullable = false, unique = true)
+    @Column(name = "exercice_id", nullable = false)
     private Long exerciseId;
+
+    /** RG5 revised (step 3): rank 1 or 2 of the reviewer, UNIQUE (exercice_id, rang). */
+    @Column(name = "rang", nullable = false)
+    private short rank;
 
     /** RG4 (Q5): must differ from the exercise author (service-level check). */
     @Column(name = "relecteur_id", nullable = false)
@@ -40,6 +43,8 @@ public class Review {
     public void setId(Long id) { this.id = id; }
     public Long getExerciseId() { return exerciseId; }
     public void setExerciseId(Long exerciseId) { this.exerciseId = exerciseId; }
+    public short getRank() { return rank; }
+    public void setRank(short rank) { this.rank = rank; }
     public Long getReviewerId() { return reviewerId; }
     public void setReviewerId(Long reviewerId) { this.reviewerId = reviewerId; }
     public Integer getNote() { return note; }

@@ -91,12 +91,13 @@ public final class Dto {
             Long id, Long sessionId, Long etudiantId, String etudiantNom,
             String lien, String statut) {}
 
-    /** GET /api/etudiants/{id}/exercices — author view, NEVER the reviewer name (RG7). */
+    /** GET /api/etudiants/{id}/exercices — author view, NEVER a reviewer identity (RG7). */
     public record ExerciseWithReviewResponse(
             Long id, Long sessionId, Long etudiantId, String etudiantNom, String lien, String statut,
-            ReceivedReviewResponse relecture) {}
+            EvaluationResponse evaluation) {}
 
-    public record ReceivedReviewResponse(Integer note, String commentaire) {}
+    /** RG16: retained grade = average of the rendered grades, provisional while only one is rendered. */
+    public record EvaluationResponse(Double note, boolean provisoire, List<String> commentaires) {}
 
     /** GET /api/relectures?relecteurId= — reviewer view. */
     public record AssignedReviewResponse(
@@ -109,7 +110,7 @@ public final class Dto {
      */
     public record DashboardRowResponse(
             Long etudiantId, String nom, int presences, int exercicesDeposes,
-            Double moyenne, int relecturesEnAttente, int presencesFormateur) {}
+            Double moyenne, int relecturesEnAttente, int presencesFormateur, boolean moyenneProvisoire) {}
 
     /** PUT /api/relectures/{id} 200 (amendment). */
     public record ReviewResponse(

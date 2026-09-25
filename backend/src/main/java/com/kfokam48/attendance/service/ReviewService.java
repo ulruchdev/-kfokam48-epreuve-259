@@ -59,8 +59,7 @@ public class ReviewService {
         review.setRenderedAt(OffsetDateTime.now());
         reviews.save(review);
 
-        exercise.setStatus(ExerciseStatus.REVIEWED);
-        exercises.save(exercise);
+        markReviewedWhenBothRendered(exercise);                          // RG16
     }
 
     /** EF11 / RG9 / DEC-1 (Q10 over Q15): a rendered review is amendable until closure. */
@@ -108,6 +107,17 @@ public class ReviewService {
     }
 
     // ---------- private steps ----------
+
+    /** RG16: the exercise is RELU once its two reviews are rendered; before, its grade is provisional. */
+    private void markReviewedWhenBothRendered(Exercise exercise) {
+        List<Review> all = reviews.findByExerciseIdIn(List.of(exercise.getId()));
+        boolean bothRendered = all.size() == ReviewAssignmentService.REVIEWERS_PER_EXERCISE
+                && all.stream().allMatch(Review::isRendered);
+        if (bothRendered) {
+            exercise.setStatus(ExerciseStatus.REVIEWED);
+            exercises.save(exercise);
+        }
+    }
 
     private void requireRendered(Review review) {
         if (!review.isRendered()) {

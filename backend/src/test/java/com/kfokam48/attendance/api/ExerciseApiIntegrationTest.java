@@ -29,15 +29,17 @@ class ExerciseApiIntegrationTest extends AbstractPostgresIntegrationTest {
     }
 
     @Test
-    void should_assignReviewer_when_anotherStudentAttendsLater_RG15() {
+    void should_awaitReviewUntilTwoPeersAttendLater_RG15() {
         Map<String, Object> session = openSession();
         markAttendance(session.get("code"), 1L);
         submit(session.get("id"), 1L, LINK);
 
         markAttendance(session.get("code"), 2L);
+        assertThat(exercisesOf(session.get("id"))).singleElement()
+                .satisfies(exercise -> assertThat(exercise.get("statut")).isEqualTo("EN_ATTENTE_AFFECTATION"));
 
-        assertThat(exercisesOf(session.get("id")))
-                .singleElement()
+        markAttendance(session.get("code"), 3L);
+        assertThat(exercisesOf(session.get("id"))).singleElement()
                 .satisfies(exercise -> assertThat(exercise.get("statut")).isEqualTo("EN_ATTENTE_RELECTURE"));
     }
 

@@ -15,7 +15,7 @@ class SeedDataIntegrationTest extends AbstractPostgresIntegrationTest {
     private static final String SEED_TITLE = "Séance 1 — Introduction à Spring Boot";
 
     @Test
-    void should_offerAClosedPastSession_withTwoReviewedExercisesAndOnePending_Q11() {
+    void should_offerAClosedPastSession_whoseExercisesAwaitTheirSecondReviewer_DEC14() {
         Map<String, Object> seeded = list("/api/sessions?promotionId=" + DEMO_PROMOTION_ID).stream()
                 .filter(session -> SEED_TITLE.equals(session.get("titre")))
                 .findFirst().orElseThrow();
@@ -23,7 +23,7 @@ class SeedDataIntegrationTest extends AbstractPostgresIntegrationTest {
         assertThat(seeded.get("statut")).isEqualTo("CLOTUREE");
         assertThat(list("/api/sessions/" + seeded.get("id") + "/exercices"))
                 .extracting(exercise -> exercise.get("statut"))
-                .containsExactlyInAnyOrder("RELU", "RELU", "EN_ATTENTE_RELECTURE");
+                .containsExactly("EN_ATTENTE_AFFECTATION", "EN_ATTENTE_AFFECTATION", "EN_ATTENTE_AFFECTATION");
     }
 
     @Test

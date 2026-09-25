@@ -67,15 +67,16 @@ public class DashboardService {
         Map<Long, Long> submissionsByStudent = countBy(promotionExercises, Exercise::getStudentId);
         Map<Long, Long> pendingByReviewer = countBy(
                 promotionReviews.stream().filter(review -> !review.isRendered()).toList(), Review::getReviewerId);
-        Map<Long, Double> averageByAuthor = averageGradeByAuthor(promotionExercises, promotionReviews);
+        Map<Long, List<RetainedGrade>> gradesByAuthor = retainedGradesByAuthor(promotionExercises, promotionReviews);
 
         return roster.stream()
                 .map(student -> new Dto.DashboardRowResponse(student.getId(), student.getNom(),
                         attendanceByStudent.getOrDefault(student.getId(), 0L).intValue(),
                         submissionsByStudent.getOrDefault(student.getId(), 0L).intValue(),
-                        averageByAuthor.get(student.getId()),
+                        averageOf(gradesByAuthor.get(student.getId())),
                         pendingByReviewer.getOrDefault(student.getId(), 0L).intValue(),
-                        trainerAttendanceByStudent.getOrDefault(student.getId(), 0L).intValue()))
+                        trainerAttendanceByStudent.getOrDefault(student.getId(), 0L).intValue(),
+                        anyProvisional(gradesByAuthor.get(student.getId()))))
                 .toList();
     }
 
@@ -91,13 +92,30 @@ public class DashboardService {
         return items.stream().collect(Collectors.groupingBy(key, Collectors.counting()));
     }
 
-    /** DEC-8 / RG9: average of the current rendered grades, per exercise author. */
-    private static Map<Long, Double> averageGradeByAuthor(List<Exercise> exerciseList, List<Review> reviewList) {
-        Map<Long, Long> authorByExercise = exerciseList.stream()
-                .collect(Collectors.toMap(Exercise::getId, Exercise::getStudentId));
-        return reviewList.stream()
+    /** RG16: an exercise's retained grade and whether it is still provisional. */
+    private record RetainedGrade(double value, boolean provisional) {}
+
+    /** RG16 / DEC-13: one retained grade per graded exercise, grouped by author. */
+    private static Map<Long, List<RetainedGrade>> retainedGradesByAuthor(List<Exercise> exerciseList,
+                                                                         List<Review> reviewList) {
+        Map<Long, List<Review>> renderedByExercise = reviewList.stream()
                 .filter(review -> review.isRendered() && review.getNote() != null)
-                .collect(Collectors.groupingBy(review -> authorByExercise.get(review.getExerciseId()),
-                        Collectors.averagingInt(Review::getNote)));
+                .collect(Collectors.groupingBy(Review::getExerciseId));
+        return exerciseList.stream()
+                .filter(exercise -> renderedByExercise.containsKey(exercise.getId()))
+                .collect(Collectors.groupingBy(Exercise::getStudentId, Collectors.mapping(exercise -> {
+                    List<Review> rendered = renderedByExercise.get(exercise.getId());
+                    double value = rendered.stream().mapToInt(Review::getNote).average().orElseThrow();
+                    return new RetainedGrade(value, rendered.size() < ReviewAssignmentService.REVIEWERS_PER_EXERCISE);
+                }, Collectors.toList())));
+    }
+
+    /** DEC-13: each exercise counts once; null when the student has no graded exercise. */
+    private static Double averageOf(List<RetainedGrade> grades) {
+        return grades == null ? null : grades.stream().mapToDouble(RetainedGrade::value).average().orElseThrow();
+    }
+
+    private static boolean anyProvisional(List<RetainedGrade> grades) {
+        return grades != null && grades.stream().anyMatch(RetainedGrade::provisional);
     }
 }

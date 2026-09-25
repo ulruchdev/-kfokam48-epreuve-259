@@ -32,12 +32,13 @@ class StudentExercisesApiIntegrationTest extends AbstractPostgresIntegrationTest
 
         Map<String, Object> exercise = exercisesOf(AUTHOR_ID, session.get("id")).getFirst();
 
-        assertThat(exercise).containsOnlyKeys("id", "sessionId", "etudiantId", "etudiantNom", "lien", "statut", "relecture");
-        assertThat(exercise.get("statut")).isEqualTo("RELU");
-        assertThat((Map<String, Object>) exercise.get("relecture"))
-                .containsOnlyKeys("note", "commentaire")
-                .containsEntry("note", 17)
-                .containsEntry("commentaire", "Well done");
+        assertThat(exercise).containsOnlyKeys("id", "sessionId", "etudiantId", "etudiantNom", "lien", "statut", "evaluation");
+        assertThat(exercise.get("statut")).isEqualTo("EN_ATTENTE_AFFECTATION");   // one peer present: second reviewer missing
+        assertThat((Map<String, Object>) exercise.get("evaluation"))
+                .containsOnlyKeys("note", "provisoire", "commentaires")
+                .containsEntry("note", 17.0)
+                .containsEntry("provisoire", true)
+                .containsEntry("commentaires", List.of("Well done"));
     }
 
     @Test
@@ -47,8 +48,8 @@ class StudentExercisesApiIntegrationTest extends AbstractPostgresIntegrationTest
 
         Map<String, Object> exercise = exercisesOf(AUTHOR_ID, session.get("id")).getFirst();
 
-        assertThat(exercise.get("statut")).isEqualTo("EN_ATTENTE_RELECTURE");
-        assertThat(exercise).containsEntry("relecture", null);
+        assertThat(exercise.get("statut")).isEqualTo("EN_ATTENTE_AFFECTATION");
+        assertThat(exercise).containsEntry("evaluation", null);
     }
 
     @Test
