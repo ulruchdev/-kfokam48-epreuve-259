@@ -22,6 +22,14 @@ public final class BusinessExceptions {
         }
     }
 
+    /** EF7: the trainer can only add a student of the session's promotion. */
+    public static class StudentNotInPromotionException extends ApiException {
+        public StudentNotInPromotionException(Long id) {
+            super("ETUDIANT_HORS_PROMOTION", HttpStatus.BAD_REQUEST,
+                    "L'étudiant " + id + " n'appartient pas à la promotion de cette session.");
+        }
+    }
+
     public static class CodeUnknownException extends ApiException {
         public CodeUnknownException() {
             super("CODE_INCONNU", HttpStatus.BAD_REQUEST, "Le code de présence est inconnu.");

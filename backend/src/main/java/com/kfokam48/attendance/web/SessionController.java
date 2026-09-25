@@ -1,8 +1,10 @@
 package com.kfokam48.attendance.web;
 
+import com.kfokam48.attendance.service.AttendanceService;
 import com.kfokam48.attendance.service.SessionService;
 import com.kfokam48.attendance.web.dto.Dto;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -15,9 +17,11 @@ import java.util.List;
 public class SessionController {
 
     private final SessionService sessionService;
+    private final AttendanceService attendanceService;
 
-    public SessionController(SessionService sessionService) {
+    public SessionController(SessionService sessionService, AttendanceService attendanceService) {
         this.sessionService = sessionService;
+        this.attendanceService = attendanceService;
     }
 
     /** [IMPOSÉ] POST /api/sessions → 201 {id, code, ouvertureAt, expirationAt}(+finAt, statut). */
@@ -46,5 +50,13 @@ public class SessionController {
     public Dto.SessionDetailResponse adjustEnd(@PathVariable Long id,
                                                @Valid @RequestBody Dto.AdjustEndTimeRequest request) {
         return sessionService.adjustEnd(id, request);
+    }
+
+    /** [LIBRE] POST /api/sessions/{id}/presences → 201 source=FORMATEUR (EF7/RG12). */
+    @PostMapping("/sessions/{id}/presences")
+    public ResponseEntity<Dto.AttendanceResponse> addManualAttendance(
+            @PathVariable Long id, @Valid @RequestBody Dto.AddManualAttendanceRequest request) {
+        Dto.AttendanceResponse response = attendanceService.addManually(id, request.etudiantId());
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 }

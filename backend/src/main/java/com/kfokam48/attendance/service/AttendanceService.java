@@ -73,6 +73,31 @@ public class AttendanceService {
                 attendance.getStudentId(), attendance.getSource().name());
     }
 
+    /** EF7 / RG12 (Q14): the trainer adds an attendance entry by hand. */
+    @Transactional
+    public Dto.AttendanceResponse addManually(Long sessionId, Long studentId) {
+        CourseSession s = sessions.findById(sessionId)
+                .orElseThrow(() -> new SessionUnknownException(sessionId));
+        Student student = students.findById(studentId)
+                .orElseThrow(() -> new StudentUnknownException(studentId));
+
+        requireSessionNotClosed(s);
+        requireStudentBelongsToSessionPromotion(s, student);
+        requireNotAlreadyPresent(sessionId, studentId);
+
+        Attendance attendance = new Attendance();
+        attendance.setSessionId(sessionId);
+        attendance.setStudentId(studentId);
+        attendance.setSource(Source.FORMATEUR);           // RG12: "il faut que ça se voie"
+        attendance.setMarkedAt(OffsetDateTime.now());
+        attendance = attendances.save(attendance);
+
+        retryPendingAssignments(sessionId);
+
+        return new Dto.AttendanceResponse(attendance.getId(), attendance.getSessionId(),
+                attendance.getStudentId(), attendance.getSource().name());
+    }
+
     // ---------- private steps (one thing each — clean code) ----------
 
     private boolean isLocked(Student student) {
@@ -109,6 +134,18 @@ public class AttendanceService {
     private void requireNotAlreadyPresent(Long sessionId, Long studentId) {
         if (attendances.existsBySessionIdAndStudentId(sessionId, studentId)) {
             throw new AlreadyPresentException();
+        }
+    }
+
+    private void requireSessionNotClosed(CourseSession session) {
+        if (session.getStatus() == CourseSession.Status.CLOTUREE) {
+            throw new SessionClosedException();
+        }
+    }
+
+    private void requireStudentBelongsToSessionPromotion(CourseSession session, Student student) {
+        if (!student.getPromotionId().equals(session.getPromotionId())) {
+            throw new StudentNotInPromotionException(student.getId());
         }
     }
 
