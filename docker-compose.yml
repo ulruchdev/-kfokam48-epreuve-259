@@ -1,5 +1,5 @@
 # docker compose up --build  ->  db (PostgreSQL 17) + backend (Spring Boot, Flyway + demo data)
-# The frontend service is added with the first frontend user story.
+#                                 + frontend (React, served by nginx, proxies /api to backend)
 services:
   db:
     image: postgres:17-alpine
@@ -31,6 +31,15 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
     restart: unless-stopped
 
 volumes:
