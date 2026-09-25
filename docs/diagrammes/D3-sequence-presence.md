@@ -27,9 +27,8 @@ sequenceDiagram
     alt unknown code
         S->>DB: increment failed attempts (etudiantId)
         S->>S: 5th failure? -> lock 2 minutes (RG3)
-        S-->>C: CodeInconnuException | TooManyAttemptsException
         C-->>F: 400 { code: "CODE_INCONNU", message: "..." }
-        or locked out (RG3)
+    else locked out (RG3: 5 failures reached)
         C-->>F: 400 { code: "TOO_MANY_ATTEMPTS", message: "..." }
     else code expired (RG1: 15 min after opening) or session ended (RG2)
         S-->>C: CodeExpireException

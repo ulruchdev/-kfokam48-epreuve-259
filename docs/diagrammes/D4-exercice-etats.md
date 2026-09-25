@@ -5,16 +5,16 @@
 
 ```mermaid
 stateDiagram-v2
-    [*] --> EN_ATTENTE_AFFECTATION : POST /api/exercices\nno eligible reviewer yet\n(sole attendee — RG15)
-    [*] --> EN_ATTENTE_RELECTURE : POST /api/exercices\nreviewer auto-assigned\namong attendees (RG6, Q7)
+    [*] --> EN_ATTENTE_AFFECTATION : POST /api/exercices, no eligible reviewer yet (RG15)
+    [*] --> EN_ATTENTE_RELECTURE : POST /api/exercices, reviewer auto-assigned (RG6, Q7)
 
-    EN_ATTENTE_AFFECTATION --> EN_ATTENTE_RELECTURE : new attendance marked in session\n-> random draw among attendees,\nauthor excluded (RG6 + RG15)
+    EN_ATTENTE_AFFECTATION --> EN_ATTENTE_RELECTURE : new attendance in session, random draw (RG6 + RG15)
 
-    EN_ATTENTE_RELECTURE --> RELU : POST /api/relectures/{id}\nnote 0-20 + comment (RG8)
-    RELU --> RELU : PUT /api/relectures/{id}\namendment until closure (RG9, Q10)
+    EN_ATTENTE_RELECTURE --> RELU : POST /api/relectures, note 0-20 (RG8)
+    RELU --> RELU : PUT amendment until closure (RG9, Q10)
 
-    EN_ATTENTE_AFFECTATION --> [*] : session closed by trainer (EF8)\nexercise left pending, visible in dashboard (Q11)
-    EN_ATTENTE_RELECTURE --> [*] : session closed, review never submitted\n-> counted in relecturesEnAttente (Q11, Q16)
+    EN_ATTENTE_AFFECTATION --> [*] : session closed, exercise left pending, visible in dashboard (Q11)
+    EN_ATTENTE_RELECTURE --> [*] : session closed, review never rendered, counted as pending (Q11, Q16)
 
     note right of EN_ATTENTE_AFFECTATION
         Link replaceable in any state
