@@ -21,5 +21,14 @@ export default defineConfig({
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
     },
+    {
+      // npm run e2e:headed — a slower, visible run for watching the flow.
+      name: 'chromium-headed',
+      use: {
+        ...devices['Desktop Chrome'],
+        headless: false,
+        launchOptions: { slowMo: 400 },
+      },
+    },
   ],
 })
