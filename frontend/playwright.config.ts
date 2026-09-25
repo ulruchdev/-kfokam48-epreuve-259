@@ -7,6 +7,9 @@ import { defineConfig, devices } from '@playwright/test'
  */
 export default defineConfig({
   testDir: './e2e',
+  // The full flow drives three browser contexts against a backend that may have just
+  // restarted (cold JVM / Hibernate): 30 s is too tight on a modest machine, 60 s is not.
+  timeout: 60_000,
   fullyParallel: false,
   workers: 1,
   retries: 0,
