@@ -41,9 +41,11 @@ public final class Dto {
             @NotNull(message = "etudiantId") Long etudiantId,
             @NotBlank(message = "lien") String lien) {}
 
+    /** Imposed {note, commentaire}; relecteurId is an optional additive extension (RG4 check). */
     public record SubmitReviewRequest(
             @NotNull(message = "note") Integer note,
-            @NotNull(message = "commentaire") String commentaire) {}
+            @NotNull(message = "commentaire") String commentaire,
+            Long relecteurId) {}
 
     public record AddManualAttendanceRequest(
             @NotNull(message = "etudiantId") Long etudiantId) {}
