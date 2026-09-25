@@ -1,7 +1,7 @@
 import { createBrowserRouter } from 'react-router-dom'
 import { Layout } from './components/Layout'
 import { RequireRole } from './components/RequireRole'
-import { IdentityScreen } from './features/identity/IdentityScreen'
+import { LandingPage } from './features/identity/LandingPage'
 import { TrainerHome } from './features/trainer/TrainerHome'
 import { StudentHome } from './features/student/StudentHome'
 import { ReviewerHome } from './features/reviewer/ReviewerHome'
@@ -11,7 +11,7 @@ export const router = createBrowserRouter([
     path: '/',
     element: <Layout />,
     children: [
-      { index: true, element: <IdentityScreen /> },
+      { index: true, element: <LandingPage /> },
       {
         path: 'formateur',
         element: (
