@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.net.URI;
 import java.time.OffsetDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -102,22 +103,28 @@ public class ExerciseService {
         List<Exercise> own = exercises.findByStudentId(studentId).stream()
                 .filter(e -> sessionId == null || e.getSessionId().equals(sessionId))
                 .toList();
-        Map<Long, Review> reviewByExercise = own.isEmpty() ? Map.of()
+        Map<Long, List<Review>> reviewsByExercise = own.isEmpty() ? Map.of()
                 : reviews.findByExerciseIdIn(own.stream().map(Exercise::getId).toList()).stream()
-                        .collect(Collectors.toMap(Review::getExerciseId, review -> review));
+                        .collect(Collectors.groupingBy(Review::getExerciseId));
         return own.stream()
                 .map(e -> new Dto.ExerciseWithReviewResponse(e.getId(), e.getSessionId(), author.getId(),
-                        author.getNom(), e.getLien(), e.getStatus().code(), receivedReview(reviewByExercise.get(e.getId()))))
+                        author.getNom(), e.getLien(), e.getStatus().code(),
+                        evaluation(reviewsByExercise.getOrDefault(e.getId(), List.of()))))
                 .toList();
     }
 
     // ---------- private steps ----------
 
-    /** RG7: only the grade and the comment leave the server, and only once rendered. */
-    private Dto.ReceivedReviewResponse receivedReview(Review review) {
-        return review != null && review.isRendered()
-                ? new Dto.ReceivedReviewResponse(review.getNote(), review.getCommentaire())
-                : null;
+    /** RG7 / RG16: retained grade and comments of the rendered reviews, never who wrote them. */
+    private Dto.EvaluationResponse evaluation(List<Review> exerciseReviews) {
+        List<Review> rendered = exerciseReviews.stream()
+                .filter(Review::isRendered)
+                .sorted(Comparator.comparing(Review::getRank))
+                .toList();
+        if (rendered.isEmpty()) return null;
+        double retained = rendered.stream().mapToInt(Review::getNote).average().orElseThrow();
+        boolean provisional = rendered.size() < ReviewAssignmentService.REVIEWERS_PER_EXERCISE;
+        return new Dto.EvaluationResponse(retained, provisional, rendered.stream().map(Review::getCommentaire).toList());
     }
 
     /** Only absolute http(s) links with a host are accepted (LIEN_INVALIDE). */

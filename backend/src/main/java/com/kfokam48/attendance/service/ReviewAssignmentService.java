@@ -12,14 +12,20 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * RG4/RG5/RG6/RG15/DEC-7 — the SINGLE source of truth for reviewer assignment.
+ * Step 3: each exercise gets two distinct reviewers (RG5 revised).
  * Called on exercise submission and on every new attendance (RG15 retry).
  */
 @Service
 public class ReviewAssignmentService {
+
+    /** RG5 revised (step 3, envelope). */
+    static final int REVIEWERS_PER_EXERCISE = 2;
 
     private final AttendanceRepository attendances;
     private final ExerciseRepository exercises;
@@ -46,22 +52,29 @@ public class ReviewAssignmentService {
             return;
         }
 
-        List<Long> attendeeIds = attendeeIdsOf(exercise.getSessionId());
-
-        List<Long> eligible = attendeeIds.stream()
+        Set<Long> currentReviewers = reviews.findByExerciseIdIn(List.of(exercise.getId())).stream()
+                .map(Review::getReviewerId).collect(Collectors.toSet());
+        List<Long> eligible = new ArrayList<>(attendeeIdsOf(exercise.getSessionId()).stream()
                 .filter(id -> !id.equals(exercise.getStudentId()))   // RG4/RG6: author excluded
-                .toList();
-        if (eligible.isEmpty()) return;                              // RG15: stays pending
+                .filter(id -> !currentReviewers.contains(id))        // RG5: two distinct reviewers
+                .toList());
 
-        Long reviewerId = drawReviewer(eligible);
+        int assigned = currentReviewers.size();
+        while (assigned < REVIEWERS_PER_EXERCISE && !eligible.isEmpty()) {
+            Long reviewerId = drawReviewer(eligible);
+            eligible.remove(reviewerId);
+            assigned++;
+            Review review = new Review();
+            review.setExerciseId(exercise.getId());
+            review.setReviewerId(reviewerId);
+            review.setRank((short) assigned);                       // DB: UNIQUE (exercice_id, rang)
+            reviews.save(review);
+        }
 
-        Review review = new Review();
-        review.setExerciseId(exercise.getId());                      // RG5: one review per exercise
-        review.setReviewerId(reviewerId);
-        reviews.save(review);
-
-        exercise.setStatus(ExerciseStatus.PENDING_REVIEW);
-        exercises.save(exercise);
+        if (assigned == REVIEWERS_PER_EXERCISE) {                    // RG15: else waits for more attendees
+            exercise.setStatus(ExerciseStatus.PENDING_REVIEW);
+            exercises.save(exercise);
+        }
     }
 
     /**
