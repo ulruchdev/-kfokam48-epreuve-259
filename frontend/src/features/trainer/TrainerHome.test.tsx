@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, waitFor } from '@testing-library/react'
+import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach } from 'vitest'
 import { MemoryRouter } from 'react-router-dom'
@@ -18,6 +18,8 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+  // Unmount before clearing identity: TrainerHome assumes identity is set.
+  cleanup()
   useIdentityStore.getState().clearIdentity()
 })
 
