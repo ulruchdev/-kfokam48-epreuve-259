@@ -1,0 +1,9 @@
+.error {
+  font-size: 0.95rem;
+  color: var(--brick);
+  background: var(--brick-bg);
+  border: 1px solid var(--brick);
+  border-radius: 2px;
+  padding: 0.6em 0.9em;
+  max-width: 100%;
+}
