@@ -10,9 +10,15 @@ export const demoMyExercises = [
     etudiantNom: 'Amina Ndongo',
     lien: 'https://github.com/amina/tp-react',
     statut: 'RELU',
+    // Contract v1.3 (RG16): two rendered reviews → final retained grade = their average.
     // relecteurNom below is NOT part of the contract (RG7 forbids it) — kept here to prove
     // the zod schema strips unknown fields so it can never reach the UI.
-    relecture: { note: 16, commentaire: 'Bon travail, attention aux clés de liste.', relecteurNom: 'Nom Secret' },
+    evaluation: {
+      note: 13.5,
+      provisoire: false,
+      commentaires: ['Bon travail, attention aux clés de liste.', 'Tests lisibles et utiles.'],
+      relecteurNom: 'Nom Secret',
+    },
   },
   {
     id: 2,
@@ -21,7 +27,17 @@ export const demoMyExercises = [
     etudiantNom: 'Amina Ndongo',
     lien: 'https://github.com/amina/tp-hooks',
     statut: 'EN_ATTENTE_RELECTURE',
-    relecture: null,
+    // Only one of the two reviews rendered: grade shown, marked provisional (RG16).
+    evaluation: { note: 12, provisoire: true, commentaires: ['Premier retour : découpage clair.'] },
+  },
+  {
+    id: 3,
+    sessionId: demoSessionId,
+    etudiantId: 1,
+    etudiantNom: 'Amina Ndongo',
+    lien: 'https://github.com/amina/tp-context',
+    statut: 'EN_ATTENTE_AFFECTATION',
+    evaluation: null,
   },
 ]
 

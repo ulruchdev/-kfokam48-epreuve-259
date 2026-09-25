@@ -407,7 +407,14 @@ export function TrainerHome() {
                       )}
                     </TableCell>
                     <TableCell>{row.exercicesDeposes}</TableCell>
-                    <TableCell data-testid="dashboard-average">{formatAverage(row.moyenne)}</TableCell>
+                    <TableCell>
+                      <span data-testid="dashboard-average">{formatAverage(row.moyenne)}</span>
+                      {row.moyenneProvisoire && (
+                        <Badge variant="secondary" className="ml-2">
+                          provisoire
+                        </Badge>
+                      )}
+                    </TableCell>
                     <TableCell>{row.relecturesEnAttente}</TableCell>
                   </TableRow>
                 ))}

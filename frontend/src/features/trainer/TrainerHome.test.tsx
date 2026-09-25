@@ -74,6 +74,16 @@ test('should_show_dash_for_null_moyenne_in_dashboard_EF6', async () => {
   expect(secondRow).toHaveTextContent('—')
 })
 
+test('should_mark_an_average_that_includes_a_provisional_grade_RG16', async () => {
+  renderTrainer()
+
+  const firstRow = await screen.findByTestId(`dashboard-row-${demoStudents[0]!.id}`)
+  await waitFor(() => {
+    expect(firstRow).toHaveTextContent(/provisoire/i)
+  })
+  expect(screen.getByTestId(`dashboard-row-${demoStudents[1]!.id}`)).not.toHaveTextContent(/provisoire/i)
+})
+
 test('should_add_manual_presence_EF7', async () => {
   const user = userEvent.setup()
   renderTrainer()

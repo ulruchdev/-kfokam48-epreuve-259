@@ -77,15 +77,20 @@ export const exerciceSchema = z.object({
 })
 export type Exercice = z.infer<typeof exerciceSchema>
 
-const relectureRecueSchema = z
+/**
+ * Contract v1.3 (RG16): retained grade = average of the rendered reviews, provisional while
+ * only one of the two is rendered. Never any reviewer identity (RG7): unknown keys are stripped.
+ */
+const evaluationSchema = z
   .object({
-    note: z.number().nullable(),
-    commentaire: z.string().nullable(),
+    note: z.number(),
+    provisoire: z.boolean(),
+    commentaires: z.array(z.string()),
   })
   .nullable()
 
 export const exerciceAvecRelectureSchema = exerciceSchema.extend({
-  relecture: relectureRecueSchema.optional(),
+  evaluation: evaluationSchema.optional(),
 })
 export type ExerciceAvecRelecture = z.infer<typeof exerciceAvecRelectureSchema>
 
@@ -119,5 +124,7 @@ export const tableauLigneSchema = z.object({
   relecturesEnAttente: z.number(),
   /** Additive extension (issue #41): how many of `presences` were added by the trainer. */
   presencesFormateur: z.number().optional(),
+  /** Additive extension (contract v1.3, RG16): the average includes a provisional grade. */
+  moyenneProvisoire: z.boolean().optional(),
 })
 export type TableauLigne = z.infer<typeof tableauLigneSchema>

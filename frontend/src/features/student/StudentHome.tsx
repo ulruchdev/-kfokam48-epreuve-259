@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useIdentityStore } from '../../stores/identityStore'
 import { useMarkPresence, useMyExercises, useReplaceExerciseLink, useSubmitExercise } from './queries'
+import { formatAverage } from '@/lib/format'
 
 const statutLabel: Record<string, string> = {
   EN_ATTENTE_AFFECTATION: 'En attente d’affectation',
@@ -173,7 +174,7 @@ export function StudentHome() {
         {myExercises.data && (
           <ul className="flex flex-col gap-3">
             {myExercises.data.map((exercice) => (
-              <li key={exercice.id}>
+              <li key={exercice.id} data-testid={`exercise-${exercice.id}`}>
                 <Card className="gap-2 py-4">
                   <CardContent className="flex flex-col gap-1.5 px-4">
                     <p className="break-words font-mono text-xs text-muted-foreground">
@@ -182,12 +183,23 @@ export function StudentHome() {
                     <Badge variant="outline" className="w-fit">
                       {statutLabel[exercice.statut]}
                     </Badge>
-                    {exercice.relecture ? (
+                    {exercice.evaluation ? (
                       <div className="mt-1 border-t border-border pt-2">
-                        <span className="font-mono font-semibold text-ochre">
-                          {exercice.relecture.note}/20
-                        </span>
-                        <p className="mt-1 text-sm">{exercice.relecture.commentaire}</p>
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono font-semibold text-ochre">
+                            {formatAverage(exercice.evaluation.note)}/20
+                          </span>
+                          {exercice.evaluation.provisoire && (
+                            <Badge variant="secondary">provisoire — une relecture sur deux</Badge>
+                          )}
+                        </div>
+                        <ul className="mt-1 flex flex-col gap-1">
+                          {exercice.evaluation.commentaires.map((commentaire, index) => (
+                            <li key={index} className="text-sm">
+                              {commentaire}
+                            </li>
+                          ))}
+                        </ul>
                       </div>
                     ) : (
                       <p className="text-sm text-muted-foreground">En attente de relecture</p>

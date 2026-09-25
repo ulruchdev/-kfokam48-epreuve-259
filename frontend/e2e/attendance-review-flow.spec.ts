@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test, type Page } from '@playwright/test'
 import { formatAverage } from '../src/lib/format.js'
 import { pickIdentity } from './helpers.js'
 
@@ -18,16 +18,18 @@ import { pickIdentity } from './helpers.js'
  * B's attendance then retries the draw and B becomes the reviewer. This
  * exercises RG15's retry-on-new-presence, not just the EF4 happy path.
  */
-test('trainer opens a session, a student deposits an exercise, a second student is drawn as reviewer and grades it, and the dashboard shows the average', async ({
+test('trainer opens a session, a student deposits, two peers are drawn as reviewers, the grade is provisional then averaged, and the dashboard shows it', async ({
   browser,
 }) => {
   const trainerCtx = await browser.newContext()
   const studentACtx = await browser.newContext()
   const studentBCtx = await browser.newContext()
+  const studentCCtx = await browser.newContext()
 
   const trainerPage = await trainerCtx.newPage()
   const studentAPage = await studentACtx.newPage()
   const studentBPage = await studentBCtx.newPage()
+  const studentCPage = await studentCCtx.newPage()
 
   // 1. Trainer opens the session (default 120 min duration) and gets the
   //    code, shown big with a live countdown (EF1, US-40).
@@ -38,42 +40,38 @@ test('trainer opens a session, a student deposits an exercise, a second student 
   expect(code).toBeTruthy()
   await expect(trainerPage.getByTestId('code-countdown')).toContainText(/expire dans/i)
 
-  // 2. Student A marks attendance with that code (EF2) and deposits their
-  //    exercise link (EF3), alone in the session so far.
+  // 2. Student A marks attendance (EF2) and deposits (EF3) while alone: no
+  //    reviewer can be drawn yet (RG15).
   const studentAName = await pickIdentity(studentAPage, { studentIndex: 1, role: 'Étudiant' })
-  await studentAPage.getByLabel(/code de la séance/i).fill(code!)
-  await studentAPage.getByRole('button', { name: /valider ma présence/i }).click()
-  await expect(studentAPage.getByTestId('attendance-confirmation')).toBeVisible()
-
+  await markAttendance(studentAPage, code!)
   const exerciseLink = `https://example.com/e2e-exercice-${Date.now()}`
   await studentAPage.getByLabel(/lien de l.exercice/i).fill(exerciseLink)
   await studentAPage.getByRole('button', { name: /déposer mon exercice/i }).click()
   await expect(studentAPage.getByTestId('deposit-confirmation')).toBeVisible()
 
-  // 3. Student B marks attendance: the only other present student, so RG15
-  //    retries the reviewer draw and assigns B.
+  // 3. Students B and C mark attendance: each new attendance draws a missing
+  //    reviewer, so B and C become A's two reviewers (RG5 revised, step 3).
   await pickIdentity(studentBPage, { studentIndex: 2, role: 'Étudiant' })
-  await studentBPage.getByLabel(/code de la séance/i).fill(code!)
-  await studentBPage.getByRole('button', { name: /valider ma présence/i }).click()
-  await expect(studentBPage.getByTestId('attendance-confirmation')).toBeVisible()
+  await markAttendance(studentBPage, code!)
+  await pickIdentity(studentCPage, { studentIndex: 3, role: 'Étudiant' })
+  await markAttendance(studentCPage, code!)
 
-  // 4. Student B switches to the reviewer role (header "Changer de rôle",
-  //    back to the landing page) and grades A's exercise (EF5).
-  await studentBPage.getByRole('button', { name: /changer de rôle/i }).click()
-  await pickIdentity(studentBPage, { studentIndex: 2, role: 'Relecteur' })
-  const reviewRow = studentBPage
-    .locator('[data-testid^="review-row-"]')
-    .filter({ hasText: exerciseLink })
-  await expect(reviewRow).toBeVisible()
-  await reviewRow.getByLabel(/note/i).fill('18')
-  await reviewRow.getByLabel(/commentaire/i).fill('Bon travail, quelques points à revoir.')
-  await reviewRow.getByRole('button', { name: /envoyer la relecture/i }).click()
-  await expect(reviewRow.getByText('18/20')).toBeVisible()
+  // 4. B renders first: A sees the grade, marked provisional (RG16).
+  await renderReview(studentBPage, 2, exerciseLink, '12', 'Découpage clair, tests à compléter.')
+  const exerciseCard = studentAPage.locator('[data-testid^="exercise-"]').filter({ hasText: exerciseLink })
+  await studentAPage.reload()
+  await expect(exerciseCard).toContainText('12/20')
+  await expect(exerciseCard).toContainText(/provisoire/i)
 
-  // 5. The trainer reloads (no real-time refresh, §3) and sees student A's
-  //    average on the dashboard (EF6). The average covers every grade A ever
-  //    received (DEC-8, the demo seed included), so the screen is checked
-  //    against the value computed by the API, never recomputed here (F3).
+  // 5. C renders: the retained grade is the average of both, no longer provisional.
+  await renderReview(studentCPage, 3, exerciseLink, '15', 'Tests lisibles et utiles.')
+  await studentAPage.reload()
+  await expect(exerciseCard).toContainText('13,5/20')
+  await expect(exerciseCard).not.toContainText(/provisoire/i)
+  await expect(exerciseCard).toContainText('Tests lisibles et utiles.')
+
+  // 6. The trainer reloads (no real-time refresh, §3) and sees student A's
+  //    average (EF6), checked against the value computed by the API (F3, DEC-13).
   await trainerPage.reload()
   const tableau = await (await trainerPage.request.get('/api/tableau?promotionId=1')).json()
   const apiRow = tableau.find((row: { nom: string }) => row.nom === studentAName)
@@ -87,4 +85,23 @@ test('trainer opens a session, a student deposits an exercise, a second student 
   await trainerCtx.close()
   await studentACtx.close()
   await studentBCtx.close()
+  await studentCCtx.close()
 })
+
+async function markAttendance(page: Page, code: string) {
+  await page.getByLabel(/code de la séance/i).fill(code)
+  await page.getByRole('button', { name: /valider ma présence/i }).click()
+  await expect(page.getByTestId('attendance-confirmation')).toBeVisible()
+}
+
+/** The student switches to the reviewer role (EF10) and renders a grade + comment (EF5). */
+async function renderReview(page: Page, studentIndex: number, exerciseLink: string, note: string, comment: string) {
+  await page.getByRole('button', { name: /changer de rôle/i }).click()
+  await pickIdentity(page, { studentIndex, role: 'Relecteur' })
+  const reviewRow = page.locator('[data-testid^="review-row-"]').filter({ hasText: exerciseLink })
+  await expect(reviewRow).toBeVisible()
+  await reviewRow.getByLabel(/note/i).fill(note)
+  await reviewRow.getByLabel(/commentaire/i).fill(comment)
+  await reviewRow.getByRole('button', { name: /envoyer la relecture/i }).click()
+  await expect(reviewRow.getByText(`${note}/20`)).toBeVisible()
+}

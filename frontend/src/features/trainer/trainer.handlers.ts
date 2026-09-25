@@ -8,6 +8,8 @@ export const demoTableau = demoStudents.map((student, index) => ({
   exercicesDeposes: index === 0 ? 1 : 0,
   moyenne: index === 0 ? 15 : null,
   relecturesEnAttente: 0,
+  // Contract v1.3 (RG16): the first student's average includes a provisional grade.
+  moyenneProvisoire: index === 0,
 }))
 
 function inMinutes(minutes: number): string {
