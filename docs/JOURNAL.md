@@ -45,11 +45,30 @@ Diff des statuts des 5 opérations imposées vérifié contre l'original : ident
 
 ## Étape 2 — Première version
 
-**Fait :**
+**Fait :** backend complet livré issue par issue (une branche et une PR mergée par US, test rouge
+commité avant chaque implémentation) : #17 socle + Docker, #5 sessions, #8 tirage du relecteur,
+#6 présence, #11 présence manuelle, #7 dépôt, #12 clôture, #9 relecture, #10 tableau, #15 notes
+reçues ; puis les Should #13, #14, #16 (utilisés par les écrans), Swagger (#37), seed réaliste
+(#38). Frontend React : landing page shadcn/ui, choix du rôle avec gardes de route strictes (#39),
+écrans formateur (session paramétrable, #40), étudiant et relecteur. Vérifié : `./mvnw verify`
+92/92, `scripts/api-smoke.sh` 50/50 contre `docker compose up`, Vitest 24/24, Playwright Chromium
+2/2 en mode normal et en mode visible (headed).
 
-**Bloqué :**
+**Bloqué :** ~40 min sur Testcontainers : Docker 29 refuse l'API 1.32 négociée (fixée à 1.44 dans
+le pom) puis une image `postgres:17-alpine` corrompue (`exec format error`, retéléchargée).
+L'application ne démarrait pas du tout (colonne `status` au lieu de `statut`) : trouvé par le
+premier test d'intégration. ~25 min de builds Docker lents (`dependency:go-offline`), résolus par
+un cache Maven BuildKit. Les tests e2e ont révélé que le parcours supposait une base vide
+(moyenne attendue 18, réelle 15 avec le seed) : c'est le test qui était faux, corrigé (#55).
 
-**IA :**
+**IA :** Claude Code a écrit le code et les tests sous ma direction, un sous-agent a construit le
+frontend dans un worktree séparé. Vérifications : chaque règle RGx a un test rouge puis vert ;
+j'ai rejeté le rabattement des erreurs sur les statuts imposés et imposé les vrais statuts HTTP
+(DEC-9, #21 : 404 pour une ressource inconnue, 429 pour RG3) ; revue des bugs trouvés en test
+(blocage RG3 annulé par le rollback, note 12.5 tronquée à 12, requête N+1 du tableau,
+`relecturesEnAttente` mal défini, « ajouté par le formateur » invisible : #41). Écart assumé au
+plan du CDC §10 : les Should #13/#14/#16 ont été faites avant le jalon v0.1 car les écrans
+relecteur et étudiant en dépendent.
 
 ---
 
