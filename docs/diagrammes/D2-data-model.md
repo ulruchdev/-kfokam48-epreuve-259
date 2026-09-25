@@ -21,7 +21,9 @@ erDiagram
     ETUDIANT {
         bigint id PK
         bigint promotion_id FK "not null -> promotion.id"
-        varchar nom "not null"
+        varchar nom "not null, UNIQUE (promotion_id, nom)"
+        integer tentatives_code "not null default 0 (RG3: wrong codes in a row)"
+        timestamptz bloque_jusqu_a "nullable (RG3: 2-minute lock end)"
     }
     SESSION {
         bigint id PK
@@ -30,8 +32,8 @@ erDiagram
         varchar code UK "not null, unique among open sessions"
         timestamptz ouverture_at "not null = now at creation"
         timestamptz expiration_at "not null = ouverture_at + 15 min (RG1)"
-        timestamptz fin_at "not null = ouverture_at + dureeMinutes, default 120 (D2)"
-        varchar statut "not null CHECK in (OUVERTE, TERMINEE, CLOTUREE)"
+        timestamptz fin_at "not null = ouverture_at + dureeMinutes, default 120 (DEC-2)"
+        varchar statut "not null default OUVERTE, CHECK in (OUVERTE, TERMINEE, CLOTUREE)"
     }
     PRESENCE {
         bigint id PK
@@ -65,14 +67,22 @@ erDiagram
 | Invariant | How | Rule |
 |---|---|---|
 | One presence per (session, student) | `UNIQUE (session_id, etudiant_id)` on PRESENCE | Q2/Q3 |
+| One exercise per (session, student) | `UNIQUE (session_id, etudiant_id)` on EXERCICE → `409 EXERCICE_DEJA_DEPOSE` | contract |
+| One student name per promotion | `UNIQUE (promotion_id, nom)` on ETUDIANT (identity picked by name, Q1) | EF10 |
+| Code unique among open sessions | partial unique index `uniq_session_code_active` (`statut <> 'CLOTUREE'`) | DEC-5 |
 | One review per exercise | `UNIQUE (exercice_id)` on RELECTURE | RG5 (Q6) |
 | Reviewer ≠ author | service check → `403 AUTO_RELECTURE` | RG4 (Q5) |
 | Reviewer among session attendees | service check at assignment | RG6 (Q7) |
 | Attendance before submission | service check → `400 PRESENCE_REQUISE` | RG14 (DEC-4) |
 | Rate limit on wrong codes | failed-attempt counter per student, 5 → 2 min lock | RG3 (Q4) |
 | Link replaceable until review starts | service check → `409 RELECTURE_COMMENCEE` | RG11 (Q13) |
-| Session closure freezes changes | status check on all write paths | RG9/RG10 |
+| Session closure freezes changes | status check on all write paths → `409 SESSION_CLOTUREE`; the code of a closed session → `410 CODE_EXPIRE` | RG9/RG10, DEC-11 |
 
 > Integrity rules that PostgreSQL can enforce are enforced in the schema (UNIQUE, CHECK).
 > Business rules that need context (rate limiting, attendance-before-submission,
 > reviewer eligibility) live in the service layer and are covered by unit tests.
+
+> `TERMINEE` is allowed by the CHECK constraint but never persisted: a session is "ended" when
+> `now > fin_at` (RG2), computed at request time, so no scheduler has to flip the status. Only
+> `OUVERTE → CLOTUREE` is written (EF8). V2 and V3 are data-only migrations (demo seed): D2 is
+> unchanged by them.
