@@ -17,10 +17,15 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./src/test/setup.ts'],
-    css: true,
-    // Single-threaded pool: this machine has little RAM, forked workers time out.
+    // CSS Modules are processed regardless; plain CSS (with the Google Fonts
+    // @import) is not needed in jsdom and would add a network dependency.
+    css: false,
+    // This machine has little RAM: cap Vitest to one worker, no isolation
+    // overhead, or forked/threaded workers time out.
     pool: 'threads',
-    poolOptions: { threads: { singleThread: true } },
+    maxWorkers: 1,
+    isolate: false,
+    testTimeout: 10000,
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html'],
