@@ -202,7 +202,7 @@ paths:
         "400": { $ref: "#/components/responses/Erreur" }   # NOTE_INVALIDE
         "403": { $ref: "#/components/responses/Erreur" }   # RELECTURE_NON_ASSIGNEE
         "404": { $ref: "#/components/responses/Erreur" }   # RELECTURE_INCONNUE
-        "409": { $ref: "#/components/responses/Erreur" }   # SESSION_CLOTUREE
+        "409": { $ref: "#/components/responses/Erreur" }   # SESSION_CLOTUREE, RELECTURE_NON_RENDUE
 
   /api/tableau:
     get:
@@ -315,7 +315,7 @@ paths:
                 $ref: "#/components/schemas/SessionDetail"
         "400": { $ref: "#/components/responses/Erreur" }   # FIN_AVANT_OUVERTURE
         "404": { $ref: "#/components/responses/Erreur" }   # SESSION_INCONNUE
-        "409": { $ref: "#/components/responses/Erreur" }   # SESSION_CLOTUREE
+        "409": { $ref: "#/components/responses/Erreur" }   # SESSION_CLOTUREE, RELECTURE_NON_RENDUE
 
   /api/sessions/{id}/cloture:
     post:
