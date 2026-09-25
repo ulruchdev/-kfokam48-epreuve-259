@@ -48,5 +48,5 @@ flowchart LR
   student capabilities and the data model stores the reviewer as a student (RG4, RG6).
 - **System rules (right)**: reviewer assignment (Q7) is system-automated, hence the
   dashed trigger from the automated-rules actor to UC4.
-- Extension points: UC2 includes rate limiting after 5 failed attempts (RG3, → 429);
+- Extension points: UC2 includes rate limiting after 5 failed attempts (RG3, → 400 TOO_MANY_ATTEMPTS);
   UC3 requires prior attendance (RG14, → 400 PRESENCE_REQUISE).

@@ -33,6 +33,14 @@ cross-checked D3's HTTP codes against the contract table line by line; rejected 
 AI's first draft of DEC-4 (it recommended "no attendance required") in favour of my
 own decision, documented as such.
 
+**Relecture qualité avant tout codage (post-jalon, toujours étape 1) :** 3 anomalies
+détectées et corrigées — (1) l'exemple d'erreur du contrat avait perdu ses accents
+imposés (`a expiré`), réécrit à l'identique du sujet ; (2) références ambiguës `D4/H4`
+renommees `DEC-4` ; (3) RG3 utilisait un statut `429` ajouté sur une opération imposée
+— ramené sous le statut 400 déjà imposé avec le code distinct `TOO_MANY_ATTEMPTS`
+(B2 : statuts imposés intacts), corrigé dans le contrat, D1, D3, le CDC et l'issue #6.
+Diff des statuts des 5 opérations imposées vérifié contre l'original : identiques.
+
 ---
 
 ## Étape 2 — Première version

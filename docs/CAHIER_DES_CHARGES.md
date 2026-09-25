@@ -118,7 +118,7 @@ tirage au sort du relecteur (RG6/RG15), calcul de la moyenne (EF6, F3).
 |---|---|---|
 | RG1 | Le code de présence expire 15 minutes après l'ouverture de la session | Q2 |
 | RG2 | Après la fin de la session, le code ne fonctionne plus (`410 CODE_EXPIRE`) | Q3 + DEC-2 |
-| RG3 | Au bout de 5 erreurs de code, l'étudiant est bloqué 2 minutes (`429 TOO_MANY_ATTEMPTS`) | Q4 |
+| RG3 | Au bout de 5 erreurs de code, l'étudiant est bloqué 2 minutes (`400 TOO_MANY_ATTEMPTS` — code distinct dans le statut 400 déjà imposé, aucun statut ajouté sur une opération imposée, B2) | Q4 |
 | RG4 | Un étudiant ne peut jamais relire son propre exercice (`403 AUTO_RELECTURE`) | Q5 |
 | RG5 | Un seul relecteur par exercice (`UNIQUE(exercice_id)`) | Q6 |
 | RG6 | Le relecteur est choisi par le système, au hasard, parmi les étudiants présents à la session, auteur exclu | Q7 |
@@ -208,6 +208,7 @@ l'hygiène Git (15 pts) ni la soumission.
 **Definition of Done — un ticket est terminé quand :**
 
 - ses critères d'acceptation sont vérifiables par un test ou une démonstration précise
+- l'entrée JOURNAL de l'étape 1 est complétée par la relecture qualité ci-dessus
 - les tests (unitaire et/ou intégration) passent : `./mvnw verify` vert
 - `docker compose up` reste vert après merge
 - la règle `RGx` concernée est citée dans le message de commit et, si pertinente, dans le nom du test

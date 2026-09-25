@@ -1,18 +1,18 @@
 openapi: 3.0.3
 info:
-  title: Contrat API — KFOKAM48 Epreuve (Attendance & Peer Review Tracker)
+  title: Contrat API — KFOKAM48 Épreuve (Attendance & Peer Review Tracker)
   version: "1.1"
   description: |
-    Les cinq operations imposees par le sujet existent EXACTEMENT ainsi :
-    memes chemins, memes verbes, memes codes de statut, meme format d'erreur.
+    Les cinq opérations imposées par le sujet existent EXACTEMENT ainsi :
+    mêmes chemins, mêmes verbes, mêmes codes de statut, même format d'erreur.
 
     Politique d'extension (additive uniquement) :
-    - des proprietes OPTIONNELLES peuvent s'ajouter aux corps requis (dureeMinutes, finAt) ;
+    - des propriétés OPTIONNELLES peuvent s'ajouter aux corps requis (dureeMinutes, finAt) ;
     - de NOUVEAUX endpoints /api/* sont libres ;
-    - de NOUVEAUX codes d'erreur peuvent s'ajouter DANS un statut deja impose
-      (ex. 400 = LIEN_INVALIDE ou PRESENCE_REQUISE) — jamais de retrait ni de renommage ;
-    - un NOUVEAU statut peut s'ajouter de maniere additive sans toucher aux statuts
-      imposes (ex. 429 ci-dessous, rule RG3) ;
+    - de NOUVEAUX codes d'erreur peuvent s'ajouter DANS un statut déjà imposé
+      (ex. 400 = LIEN_INVALIDE ou PRESENCE_REQUISE ou TOO_MANY_ATTEMPTS) —
+      jamais de retrait ni de renommage, et AUCUN statut ajouté sur les opérations
+      imposées (les statuts de la règle RG3/Q4 passent par le 400 déjà imposé) ;
     - le format d'erreur {"code", "message"} vaut pour TOUTES les erreurs, sans exception.
 
 servers:
@@ -20,11 +20,11 @@ servers:
 
 paths:
 
-  # ===================== OPERATIONS IMPOSEES =====================
+  # ===================== OPÉRATIONS IMPOSÉES =====================
 
   /api/sessions:
     post:
-      summary: "[IMPOSE] Le formateur ouvre une session et obtient un code de presence"
+      summary: "[IMPOSÉ] Le formateur ouvre une session et obtient un code de présence"
       requestBody:
         required: true
         content:
@@ -37,7 +37,7 @@ paths:
                 promotionId: { type: integer, format: int64 }
                 dureeMinutes:
                   type: integer
-                  description: "Extension additive (D2). Defaut 120. Definit finAt."
+                  description: "Extension additive (DEC-2). Défaut 120. Définit finAt."
       responses:
         "201":
           description: Session ouverte
@@ -54,7 +54,7 @@ paths:
                   finAt:
                     type: string
                     format: date-time
-                    description: "Extension additive (D2) : fin de session prevue."
+                    description: "Extension additive (DEC-2) : fin de session prévue."
                   statut:
                     type: string
                     enum: [OUVERTE, TERMINEE, CLOTUREE]
@@ -69,7 +69,7 @@ paths:
           schema: { type: integer, format: int64 }
       responses:
         "200":
-          description: Sessions de la promotion (toutes, la plus recente d'abord)
+          description: Sessions de la promotion (toutes, la plus récente d'abord)
           content:
             application/json:
               schema:
@@ -80,7 +80,7 @@ paths:
 
   /api/presences:
     post:
-      summary: "[IMPOSE] Un etudiant marque sa presence avec le code"
+      summary: "[IMPOSÉ] Un étudiant marque sa présence avec le code"
       requestBody:
         required: true
         content:
@@ -93,7 +93,7 @@ paths:
                 etudiantId: { type: integer, format: int64 }
       responses:
         "201":
-          description: Presence enregistree
+          description: Présence enregistrée
           content:
             application/json:
               schema:
@@ -104,17 +104,16 @@ paths:
                   sessionId: { type: integer, format: int64 }
                   etudiantId: { type: integer, format: int64 }
                   source: { type: string, enum: [ETUDIANT, FORMATEUR] }
-        "400": { $ref: "#/components/responses/Erreur" }   # CODE_INCONNU, ETUDIANT_INCONNU
+        "400": { $ref: "#/components/responses/Erreur" }   # CODE_INCONNU, ETUDIANT_INCONNU, TOO_MANY_ATTEMPTS (RG3 : 5 erreurs -> blocage 2 min, Q4)
         "409": { $ref: "#/components/responses/Erreur" }   # DEJA_PRESENT
         "410": { $ref: "#/components/responses/Erreur" }   # CODE_EXPIRE
-        "429": { $ref: "#/components/responses/Erreur" }   # TOO_MANY_ATTEMPTS — extension additive (RG3 : 5 erreurs -> blocage 2 min, Q4)
 
   /api/exercices:
     post:
-      summary: "[IMPOSE] Un etudiant depose le lien de son exercice"
+      summary: "[IMPOSÉ] Un étudiant dépose le lien de son exercice"
       description: |
-        Extension additive (D4/H4) : l'etudiant doit avoir marque sa presence a la
-        session, sinon 400 PRESENCE_REQUISE (statut deja impose, code distinct).
+        Extension additive (DEC-4/RG14) : l'étudiant doit avoir marqué sa présence à la
+        session, sinon 400 PRESENCE_REQUISE (statut déjà imposé, code distinct).
       requestBody:
         required: true
         content:
@@ -128,7 +127,7 @@ paths:
                 lien: { type: string, format: uri }
       responses:
         "201":
-          description: Exercice depose
+          description: Exercice déposé
           content:
             application/json:
               schema:
@@ -142,7 +141,7 @@ paths:
 
   /api/relectures/{id}:
     post:
-      summary: "[IMPOSE] Un relecteur rend sa note et son commentaire"
+      summary: "[IMPOSÉ] Un relecteur rend sa note et son commentaire"
       parameters:
         - name: id
           in: path
@@ -159,13 +158,13 @@ paths:
                 note: { type: integer, minimum: 0, maximum: 20 }
                 commentaire: { type: string }
       responses:
-        "200": { description: Relecture enregistree }
+        "200": { description: Relecture enregistrée }
         "400": { $ref: "#/components/responses/Erreur" }   # NOTE_INVALIDE
         "403": { $ref: "#/components/responses/Erreur" }   # AUTO_RELECTURE, RELECTURE_NON_ASSIGNEE
         "409": { $ref: "#/components/responses/Erreur" }   # RELECTURE_DEJA_RENDUE, SESSION_CLOTUREE
     put:
-      summary: "[LIBRE] Le relecteur corrige sa relecture tant que la session n'est pas cloturee"
-      description: "RG9 / D1 (Q10 retenu contre Q15). Apres cloture : 409 SESSION_CLOTUREE."
+      summary: "[LIBRE] Le relecteur corrige sa relecture tant que la session n'est pas clôturée"
+      description: "RG9 / DEC-1 (Q10 retenu contre Q15). Après clôture : 409 SESSION_CLOTUREE."
       parameters:
         - name: id
           in: path
@@ -183,7 +182,7 @@ paths:
                 commentaire: { type: string }
       responses:
         "200":
-          description: Relecture corrigee
+          description: Relecture corrigée
           content:
             application/json:
               schema:
@@ -195,7 +194,7 @@ paths:
 
   /api/tableau:
     get:
-      summary: "[IMPOSE] Le tableau recapitulatif du formateur"
+      summary: "[IMPOSÉ] Le tableau récapitulatif du formateur"
       parameters:
         - name: promotionId
           in: query
@@ -203,7 +202,7 @@ paths:
           schema: { type: integer, format: int64 }
       responses:
         "200":
-          description: Recapitulatif par etudiant
+          description: Récapitulatif par étudiant
           content:
             application/json:
               schema:
@@ -225,7 +224,7 @@ paths:
 
   /api/promotions:
     get:
-      summary: "[LIBRE] Liste des promotions (choix d'identite, EF10 — Q1)"
+      summary: "[LIBRE] Liste des promotions (choix d'identité, EF10 — Q1)"
       responses:
         "200":
           description: Promotions
@@ -242,7 +241,7 @@ paths:
 
   /api/promotions/{promotionId}/etudiants:
     get:
-      summary: "[LIBRE] Etudiants d'une promotion (choix d'identite, EF10 — Q1)"
+      summary: "[LIBRE] Étudiants d'une promotion (choix d'identité, EF10 — Q1)"
       parameters:
         - name: promotionId
           in: path
@@ -250,7 +249,7 @@ paths:
           schema: { type: integer, format: int64 }
       responses:
         "200":
-          description: Etudiants de la promotion
+          description: Étudiants de la promotion
           content:
             application/json:
               schema:
@@ -265,7 +264,7 @@ paths:
 
   /api/sessions/{id}:
     get:
-      summary: "[LIBRE] Detail d'une session"
+      summary: "[LIBRE] Détail d'une session"
       parameters:
         - name: id
           in: path
@@ -273,14 +272,14 @@ paths:
           schema: { type: integer, format: int64 }
       responses:
         "200":
-          description: Detail de la session
+          description: Détail de la session
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/SessionDetail"
         "404": { $ref: "#/components/responses/Erreur" }   # SESSION_INCONNUE
     put:
-      summary: "[LIBRE] Le formateur ajuste l'heure de fin de la session (D2)"
+      summary: "[LIBRE] Le formateur ajuste l'heure de fin de la session (DEC-2)"
       parameters:
         - name: id
           in: path
@@ -297,7 +296,7 @@ paths:
                 finAt: { type: string, format: date-time }
       responses:
         "200":
-          description: Session mise a jour
+          description: Session mise à jour
           content:
             application/json:
               schema:
@@ -308,22 +307,22 @@ paths:
 
   /api/sessions/{id}/cloture:
     post:
-      summary: "[LIBRE] Le formateur cloture la session (EF8)"
-      description: "Apres cloture : plus de depot (RG10), plus de correction de relecture (RG9)."
+      summary: "[LIBRE] Le formateur clôture la session (EF8)"
+      description: "Après clôture : plus de dépôt (RG10), plus de correction de relecture (RG9)."
       parameters:
         - name: id
           in: path
           required: true
           schema: { type: integer, format: int64 }
       responses:
-        "204": { description: Session cloturee }
+        "204": { description: Session clôturée }
         "404": { $ref: "#/components/responses/Erreur" }   # SESSION_INCONNUE
         "409": { $ref: "#/components/responses/Erreur" }   # SESSION_DEJA_CLOTUREE
 
   /api/sessions/{id}/presences:
     post:
-      summary: "[LIBRE] Le formateur ajoute une presence a la main (EF7 — Q14, RG12)"
-      description: "La reponse renvoie source=FORMATEUR : 'ajoute par le formateur' doit se voir."
+      summary: "[LIBRE] Le formateur ajoute une présence à la main (EF7 — Q14, RG12)"
+      description: "La réponse renvoie source=FORMATEUR : « ajouté par le formateur » doit se voir."
       parameters:
         - name: id
           in: path
@@ -340,7 +339,7 @@ paths:
                 etudiantId: { type: integer, format: int64 }
       responses:
         "201":
-          description: Presence ajoutee
+          description: Présence ajoutée
           content:
             application/json:
               schema:
@@ -376,8 +375,8 @@ paths:
 
   /api/exercices/{id}:
     put:
-      summary: "[LIBRE] L'etudiant remplace le lien de son exercice (EF12 — Q13, RG11)"
-      description: "Impossible si une relecture a commence : 409 RELECTURE_COMMENCEE."
+      summary: "[LIBRE] L'étudiant remplace le lien de son exercice (EF12 — Q13, RG11)"
+      description: "Impossible si une relecture a commencé : 409 RELECTURE_COMMENCEE."
       parameters:
         - name: id
           in: path
@@ -394,18 +393,18 @@ paths:
                 lien: { type: string, format: uri }
       responses:
         "200":
-          description: Lien remplace
+          description: Lien remplacé
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Exercice"
         "400": { $ref: "#/components/responses/Erreur" }   # LIEN_INVALIDE
-        "404": { $ref: "#/components/responses/Erreur" }   # EXERCICE_INCONNUE
+        "404": { $ref: "#/components/responses/Erreur" }   # EXERCICE_INCONNU
         "409": { $ref: "#/components/responses/Erreur" }   # RELECTURE_COMMENCEE, SESSION_CLOTUREE
 
   /api/relectures:
     get:
-      summary: "[LIBRE] Relectures assignees a un relecteur (EF13)"
+      summary: "[LIBRE] Relectures assignées à un relecteur (EF13)"
       parameters:
         - name: relecteurId
           in: query
@@ -413,7 +412,7 @@ paths:
           schema: { type: integer, format: int64 }
       responses:
         "200":
-          description: Relectures assignees (en attente et rendues)
+          description: Relectures assignées (en attente et rendues)
           content:
             application/json:
               schema:
@@ -424,8 +423,8 @@ paths:
 
   /api/etudiants/{etudiantId}/exercices:
     get:
-      summary: "[LIBRE] Exercices d'un etudiant avec les relectures recues (EF9 — Q8, RG7)"
-      description: "Le nom du relecteur n'est JAMAIS expose (RG7)."
+      summary: "[LIBRE] Exercices d'un étudiant avec les relectures reçues (EF9 — Q8, RG7)"
+      description: "Le nom du relecteur n'est JAMAIS exposé (RG7)."
       parameters:
         - name: etudiantId
           in: path
@@ -437,7 +436,7 @@ paths:
           schema: { type: integer, format: int64 }
       responses:
         "200":
-          description: Exercices et relectures recues
+          description: Exercices et relectures reçues
           content:
             application/json:
               schema:
@@ -457,7 +456,7 @@ components:
           description: "Identifiant stable, en majuscules. Exemple - CODE_EXPIRE"
         message:
           type: string
-          description: "Phrase lisible par un humain, en francais"
+          description: "Phrase lisible par un humain, en français"
     SessionResume:
       type: object
       required: [id, titre, ouvertureAt, expirationAt, finAt, statut]
@@ -523,12 +522,12 @@ components:
   responses:
     Erreur:
       description: |
-        Format d'erreur impose pour TOUTES les erreurs, sans exception.
-        Une stack trace, un corps vide ou la page d'erreur par defaut de Spring
-        valent zero sur ce critere.
+        Format d'erreur imposé pour TOUTES les erreurs, sans exception.
+        Une stack trace, un corps vide ou la page d'erreur par défaut de Spring
+        valent zéro sur ce critère.
       content:
         application/json:
           schema: { $ref: "#/components/schemas/Erreur" }
           example:
             code: CODE_EXPIRE
-            message: Le code de presence a expire.
+            message: Le code de présence a expiré.
