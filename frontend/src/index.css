@@ -1,10 +1,38 @@
 @import url('https://fonts.googleapis.com/css2?family=Bitter:wght@500;600;700&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap');
+@import 'tailwindcss';
 
+/* ------------------------------------------------------------------------
+ * Design tokens: a classroom register, not a generic SaaS dashboard.
+ * Mapped onto shadcn/ui's semantic variable names so every ui/* primitive
+ * inherits this palette automatically.
+ * ---------------------------------------------------------------------- */
 :root {
-  /* Colour: a classroom register, not a SaaS dashboard. */
-  --ink: #1c2420;
-  --paper: #eef1ea;
-  --paper-raised: #f7f9f4;
+  --font-display: 'Bitter', Georgia, 'Times New Roman', serif;
+  --font-body: 'Public Sans', -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'Courier New', monospace;
+  --radius: 0.4rem;
+
+  --background: #eef1ea;
+  --foreground: #1c2420;
+  --card: #f7f9f4;
+  --card-foreground: #1c2420;
+  --popover: #f7f9f4;
+  --popover-foreground: #1c2420;
+  --primary: #26332c;
+  --primary-foreground: #f5f8f3;
+  --secondary: #f3e6cd;
+  --secondary-foreground: #6b4a13;
+  --muted: #e4e0d0;
+  --muted-foreground: #5b6158;
+  --accent: #2f6b4f;
+  --accent-foreground: #f5f8f3;
+  --destructive: #9c3f30;
+  --destructive-foreground: #f5f8f3;
+  --border: #cabf9d;
+  --input: #cabf9d;
+  --ring: #a6711f;
+
+  /* Register-specific accents, used beyond the semantic set above. */
   --slate: #26332c;
   --chalk: #f5f8f3;
   --ochre: #a6711f;
@@ -14,41 +42,29 @@
   --brick: #9c3f30;
   --brick-bg: #f5ded9;
   --line: #cabf9d;
-
-  --font-display: 'Bitter', Georgia, 'Times New Roman', serif;
-  --font-body: 'Public Sans', -apple-system, 'Segoe UI', sans-serif;
-  --font-mono: 'IBM Plex Mono', ui-monospace, 'Courier New', monospace;
-
-  color-scheme: light;
-  color: var(--ink);
-  background: var(--paper);
-  font: 16px/1.5 var(--font-body);
-  -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) {
-    --ink: #eef1ea;
-    --paper: #1a221d;
-    --paper-raised: #212b24;
-    --slate: #0f1512;
-    --chalk: #eef1ea;
-    --ochre: #d9a75a;
-    --ochre-bg: #3a2f18;
-    --pine: #6fbf95;
-    --pine-bg: #17301f;
-    --brick: #e08e7e;
-    --brick-bg: #3a1e18;
-    --line: #3a4238;
-    color-scheme: dark;
-  }
-}
+.dark {
+  --background: #1a221d;
+  --foreground: #eef1ea;
+  --card: #212b24;
+  --card-foreground: #eef1ea;
+  --popover: #212b24;
+  --popover-foreground: #eef1ea;
+  --primary: #eef1ea;
+  --primary-foreground: #1a221d;
+  --secondary: #3a2f18;
+  --secondary-foreground: #d9a75a;
+  --muted: #263029;
+  --muted-foreground: #a7b0a3;
+  --accent: #6fbf95;
+  --accent-foreground: #0f1512;
+  --destructive: #e08e7e;
+  --destructive-foreground: #1a221d;
+  --border: #3a4238;
+  --input: #3a4238;
+  --ring: #d9a75a;
 
-:root[data-theme='dark'] {
-  --ink: #eef1ea;
-  --paper: #1a221d;
-  --paper-raised: #212b24;
   --slate: #0f1512;
   --chalk: #eef1ea;
   --ochre: #d9a75a;
@@ -58,62 +74,74 @@
   --brick: #e08e7e;
   --brick-bg: #3a1e18;
   --line: #3a4238;
-  color-scheme: dark;
 }
 
-* {
-  box-sizing: border-box;
+@theme inline {
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
+  --font-mono: var(--font-mono);
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 4px);
+  --radius-xl: calc(var(--radius) + 8px);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-slate: var(--slate);
+  --color-chalk: var(--chalk);
+  --color-ochre: var(--ochre);
+  --color-ochre-bg: var(--ochre-bg);
+  --color-pine: var(--pine);
+  --color-pine-bg: var(--pine-bg);
+  --color-brick: var(--brick);
+  --color-brick-bg: var(--brick-bg);
+  --color-line: var(--line);
 }
 
-body {
-  margin: 0;
-  background: var(--paper);
-  color: var(--ink);
-  min-height: 100svh;
-}
-
-#root {
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
-}
-
-h1,
-h2,
-h3 {
-  font-family: var(--font-display);
-  font-weight: 600;
-  line-height: 1.2;
-  margin: 0 0 0.5em;
-}
-
-h1 {
-  font-size: clamp(1.7rem, 1.3rem + 1.6vw, 2.4rem);
-}
-
-h2 {
-  font-size: clamp(1.25rem, 1.1rem + 0.6vw, 1.6rem);
-}
-
-p {
-  margin: 0 0 1em;
-  max-width: 62ch;
-}
-
-button,
-input,
-select {
-  font: inherit;
-  color: inherit;
-}
-
-a {
-  color: var(--pine);
-}
-
-:focus-visible {
-  outline: 3px solid var(--ochre);
-  outline-offset: 2px;
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font: 16px/1.5 var(--font-body);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  #root {
+    min-height: 100svh;
+    display: flex;
+    flex-direction: column;
+  }
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    line-height: 1.2;
+  }
+  :focus-visible {
+    outline: 3px solid var(--ring);
+    outline-offset: 2px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

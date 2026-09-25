@@ -27,6 +27,18 @@ export const trainerHandlers = [
     )
   }),
   http.get('/api/sessions', () => HttpResponse.json([])),
+  http.get('/api/sessions/:id', ({ params }) =>
+    HttpResponse.json({
+      id: Number(params.id),
+      promotionId: 1,
+      titre: 'Session recouvrée',
+      code: 'XY99ZZ',
+      ouvertureAt: '2026-09-25T09:00:00Z',
+      expirationAt: '2026-09-25T09:15:00Z',
+      finAt: '2026-09-25T11:00:00Z',
+      statut: 'OUVERTE',
+    }),
+  ),
   http.get('/api/tableau', () => HttpResponse.json(demoTableau)),
   http.post('/api/sessions/:id/presences', async ({ params, request }) => {
     const body = (await request.json()) as { etudiantId: number }

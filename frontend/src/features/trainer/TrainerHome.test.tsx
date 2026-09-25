@@ -3,17 +3,16 @@ import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach } from 'vitest'
 import { MemoryRouter } from 'react-router-dom'
+import { Toaster } from '@/components/ui/sonner'
 import { TrainerHome } from './TrainerHome'
 import { useIdentityStore } from '../../stores/identityStore'
 import { demoPromotions, demoStudents } from '../identity/identity.handlers'
 
 beforeEach(() => {
   useIdentityStore.getState().setIdentity({
+    role: 'FORMATEUR',
     promotionId: demoPromotions[0]!.id,
     promotionNom: demoPromotions[0]!.nom,
-    etudiantId: 99,
-    etudiantNom: 'Formateur Test',
-    role: 'FORMATEUR',
   })
 })
 
@@ -29,6 +28,7 @@ function renderTrainer() {
     <QueryClientProvider client={queryClient}>
       <MemoryRouter>
         <TrainerHome />
+        <Toaster />
       </MemoryRouter>
     </QueryClientProvider>,
   )

@@ -39,6 +39,8 @@ export type SessionResume = z.infer<typeof sessionResumeSchema>
 
 export const sessionDetailSchema = sessionResumeSchema.extend({
   promotionId: z.number(),
+  /** GET/PUT /api/sessions/{id} now return the code too (used to recover a reopened session). */
+  code: z.string(),
 })
 export type SessionDetail = z.infer<typeof sessionDetailSchema>
 
@@ -115,5 +117,7 @@ export const tableauLigneSchema = z.object({
   exercicesDeposes: z.number(),
   moyenne: z.number().nullable(),
   relecturesEnAttente: z.number(),
+  /** Additive extension (issue #41): how many of `presences` were added by the trainer. */
+  presencesFormateur: z.number().optional(),
 })
 export type TableauLigne = z.infer<typeof tableauLigneSchema>
