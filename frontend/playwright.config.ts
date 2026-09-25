@@ -1,0 +1,25 @@
+import { defineConfig, devices } from '@playwright/test'
+
+/**
+ * The app is started by `docker compose up --build` (frontend on :5173,
+ * proxying /api to the backend), not by this config: there is no webServer
+ * entry here on purpose.
+ */
+export default defineConfig({
+  testDir: './e2e',
+  fullyParallel: false,
+  workers: 1,
+  retries: 0,
+  reporter: [['html', { outputFolder: 'playwright-report', open: 'never' }]],
+  use: {
+    baseURL: 'http://localhost:5173',
+    trace: 'retain-on-failure',
+    screenshot: 'only-on-failure',
+  },
+  projects: [
+    {
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'] },
+    },
+  ],
+})

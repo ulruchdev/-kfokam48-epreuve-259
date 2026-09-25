@@ -17,6 +17,9 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./src/test/setup.ts'],
+    // e2e/ holds Playwright specs (its own test() implementation, run via
+    // `npm run e2e`), not Vitest ones — exclude it from discovery.
+    exclude: ['**/node_modules/**', '**/e2e/**'],
     // CSS Modules are processed regardless; plain CSS (with the Google Fonts
     // @import) is not needed in jsdom and would add a network dependency.
     css: false,
