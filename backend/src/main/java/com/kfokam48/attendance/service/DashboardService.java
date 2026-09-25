@@ -44,7 +44,8 @@ public class DashboardService {
 
     /**
      * EF6 / Q16 — per student: attendance count, submitted exercises, average of the
-     * current received grades (null when none, DEC-8) and reviews still to do (Q11/Q16).
+     * current received grades (null when none, DEC-8), reviews still to do (Q11/Q16) and
+     * attendance added by the trainer (EF7, Q14).
      * A fixed number of queries whatever the promotion size (ENF2); the API computes the
      * average, the frontend never does (F3).
      */
@@ -61,6 +62,8 @@ public class DashboardService {
                 : reviews.findByExerciseIdIn(promotionExercises.stream().map(Exercise::getId).toList());
 
         Map<Long, Long> attendanceByStudent = countBy(promotionAttendances, Attendance::getStudentId);
+        Map<Long, Long> trainerAttendanceByStudent = countBy(promotionAttendances.stream()
+                .filter(attendance -> attendance.getSource() == Attendance.Source.FORMATEUR).toList(), Attendance::getStudentId);
         Map<Long, Long> submissionsByStudent = countBy(promotionExercises, Exercise::getStudentId);
         Map<Long, Long> pendingByReviewer = countBy(
                 promotionReviews.stream().filter(review -> !review.isRendered()).toList(), Review::getReviewerId);
@@ -71,7 +74,8 @@ public class DashboardService {
                         attendanceByStudent.getOrDefault(student.getId(), 0L).intValue(),
                         submissionsByStudent.getOrDefault(student.getId(), 0L).intValue(),
                         averageByAuthor.get(student.getId()),
-                        pendingByReviewer.getOrDefault(student.getId(), 0L).intValue()))
+                        pendingByReviewer.getOrDefault(student.getId(), 0L).intValue(),
+                        trainerAttendanceByStudent.getOrDefault(student.getId(), 0L).intValue()))
                 .toList();
     }
 

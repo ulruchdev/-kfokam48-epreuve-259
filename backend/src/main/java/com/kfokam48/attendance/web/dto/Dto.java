@@ -103,10 +103,13 @@ public final class Dto {
             Long id, Long exerciceId, String exerciceLien, String auteurNom,
             boolean rendue, Integer note, String commentaire) {}
 
-    /** GET /api/tableau?promotionId= — the 6 imposed required fields per student. */
+    /**
+     * GET /api/tableau?promotionId= — the 6 imposed fields per student, plus the additive
+     * presencesFormateur: attendance added by the trainer must be visible (EF7, Q14).
+     */
     public record DashboardRowResponse(
             Long etudiantId, String nom, int presences, int exercicesDeposes,
-            Double moyenne, int relecturesEnAttente) {}
+            Double moyenne, int relecturesEnAttente, int presencesFormateur) {}
 
     /** PUT /api/relectures/{id} 200 (amendment). */
     public record ReviewResponse(
