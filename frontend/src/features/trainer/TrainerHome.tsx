@@ -6,13 +6,23 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { useIdentityStore } from '../../stores/identityStore'
+import { CodeCountdown } from './CodeCountdown'
 import {
   useAddManualPresence,
+  useAdjustSessionEnd,
   useCloseSession,
   useOpenSession,
   useSessionDetail,
@@ -21,13 +31,21 @@ import {
   useTrainerStudents,
 } from './queries'
 
-interface OpenedSession {
+const statutLabel: Record<string, string> = {
+  OUVERTE: 'Ouverte',
+  TERMINEE: 'Terminée',
+  CLOTUREE: 'Clôturée',
+}
+
+interface KnownSession {
   id: number
   code: string
   titre: string
+  expirationAt: string
+  finAt?: string
 }
 
-/** EF1 (code shown big), EF6 (dashboard), EF7 (manual attendance), EF8 (close). */
+/** EF1/DEC-2 (duration, countdown), EF6 (dashboard), EF7 (manual attendance), EF8 (close), US-40 (list, reopen, adjust end). */
 export function TrainerHome() {
   const identity = useIdentityStore((state) => state.identity)!
 
@@ -37,28 +55,35 @@ export function TrainerHome() {
   const openSession = useOpenSession()
   const addPresence = useAddManualPresence(identity.promotionId)
   const closeSession = useCloseSession(identity.promotionId)
+  const adjustEnd = useAdjustSessionEnd(identity.promotionId)
 
   const [titre, setTitre] = useState('')
-  const [opened, setOpened] = useState<OpenedSession | null>(null)
-  const [closed, setClosed] = useState(false)
+  const [duree, setDuree] = useState(120)
+  const [knownSession, setKnownSession] = useState<KnownSession | null>(null)
+  const [selectedSessionId, setSelectedSessionId] = useState<number | undefined>(undefined)
+  const [justClosed, setJustClosed] = useState(false)
   const [manualStudentId, setManualStudentId] = useState<number | undefined>(undefined)
+  const [newFinAt, setNewFinAt] = useState('')
+  const [closeDialogOpen, setCloseDialogOpen] = useState(false)
 
-  const recoveredActive = sessions.data?.find((s) => s.statut === 'OUVERTE')
-  const activeSessionId = opened?.id ?? recoveredActive?.id
-  // GET /api/sessions/{id} now returns the code too: recover it when the
-  // trainer reopens a session they already started (no need for our own state).
-  const sessionDetail = useSessionDetail(opened ? undefined : recoveredActive?.id)
-  const code = opened?.code ?? sessionDetail.data?.code
-  const activeTitre = opened?.titre ?? recoveredActive?.titre
-  const hasActiveSession = Boolean(activeSessionId) && !closed
+  // Known locally right after opening: skips a round-trip. Otherwise fetch
+  // GET /api/sessions/{id}, which now returns the code too (US-40).
+  const sessionDetail = useSessionDetail(knownSession ? undefined : selectedSessionId)
+  const activeId = knownSession?.id ?? selectedSessionId
+  const code = knownSession?.code ?? sessionDetail.data?.code
+  const activeTitre = knownSession?.titre ?? sessionDetail.data?.titre
+  const expirationAt = knownSession?.expirationAt ?? sessionDetail.data?.expirationAt
+  const hasActiveSession = Boolean(activeId) && !justClosed
 
   function handleOpenSession() {
     if (!titre.trim()) return
     openSession.mutate(
-      { titre, promotionId: identity.promotionId },
+      { titre, promotionId: identity.promotionId, dureeMinutes: duree },
       {
         onSuccess: (data) => {
-          setOpened({ id: data.id, code: data.code, titre })
+          setKnownSession({ id: data.id, code: data.code, titre, expirationAt: data.expirationAt, finAt: data.finAt })
+          setSelectedSessionId(data.id)
+          setJustClosed(false)
           toast.success('Session ouverte, le code est affiché ci-dessous.')
         },
         onError: (error) => toast.error(error.message),
@@ -66,11 +91,17 @@ export function TrainerHome() {
     )
   }
 
+  function handleReopen(id: number) {
+    setKnownSession(null)
+    setSelectedSessionId(id)
+    setJustClosed(false)
+  }
+
   function handleAddPresence() {
-    if (manualStudentId === undefined || !activeSessionId) return
+    if (manualStudentId === undefined || !activeId) return
     const student = students.data?.find((s) => s.id === manualStudentId)
     addPresence.mutate(
-      { sessionId: activeSessionId, etudiantId: manualStudentId },
+      { sessionId: activeId, etudiantId: manualStudentId },
       {
         onSuccess: () => {
           toast.success(`${student?.nom ?? 'Étudiant'} — ajouté par le formateur`)
@@ -81,14 +112,32 @@ export function TrainerHome() {
     )
   }
 
-  function handleCloseSession() {
-    if (!activeSessionId) return
-    closeSession.mutate(activeSessionId, {
+  function handleAdjustEnd() {
+    if (!activeId || !newFinAt) return
+    adjustEnd.mutate(
+      { id: activeId, finAt: new Date(newFinAt).toISOString() },
+      {
+        onSuccess: () => {
+          toast.success('Heure de fin mise à jour.')
+          setNewFinAt('')
+        },
+        onError: (error) => toast.error(error.message),
+      },
+    )
+  }
+
+  function handleConfirmClose() {
+    if (!activeId) return
+    closeSession.mutate(activeId, {
       onSuccess: () => {
-        setClosed(true)
+        setJustClosed(true)
+        setCloseDialogOpen(false)
         toast.success('Clôture enregistrée.')
       },
-      onError: (error) => toast.error(error.message),
+      onError: (error) => {
+        setCloseDialogOpen(false)
+        toast.error(error.message)
+      },
     })
   }
 
@@ -99,13 +148,13 @@ export function TrainerHome() {
         <p className="text-sm text-muted-foreground">{identity.promotionNom}</p>
       </div>
 
-      {closed && (
+      {justClosed && (
         <Alert>
           <AlertDescription>Session clôturée.</AlertDescription>
         </Alert>
       )}
 
-      {!closed && hasActiveSession && (
+      {!justClosed && hasActiveSession && (
         <Card className="bg-slate text-chalk">
           <CardHeader>
             <div className="flex items-center gap-2 text-chalk/70">
@@ -123,6 +172,7 @@ export function TrainerHome() {
                 {code}
               </p>
             )}
+            {expirationAt && <CodeCountdown key={expirationAt} expirationAt={expirationAt} />}
           </CardHeader>
           <CardContent className="flex flex-col gap-4 border-t border-chalk/20 pt-4">
             <div className="flex flex-col gap-1.5">
@@ -163,25 +213,67 @@ export function TrainerHome() {
               )}
             </div>
 
+            <div className="flex flex-col gap-1.5 border-t border-chalk/20 pt-4">
+              <Label htmlFor="session-fin" className="text-chalk/70">
+                Nouvelle heure de fin
+              </Label>
+              <div className="flex flex-wrap gap-2">
+                <Input
+                  id="session-fin"
+                  type="datetime-local"
+                  className="w-auto border-chalk/30 bg-chalk/10 text-chalk"
+                  value={newFinAt}
+                  onChange={(event) => setNewFinAt(event.target.value)}
+                />
+                <Button
+                  variant="secondary"
+                  onClick={handleAdjustEnd}
+                  disabled={!newFinAt || adjustEnd.isPending}
+                >
+                  Mettre à jour la fin
+                </Button>
+              </div>
+              {adjustEnd.isError && (
+                <Alert variant="destructive">
+                  <AlertCircle className="size-4" />
+                  <AlertDescription>{adjustEnd.error.message}</AlertDescription>
+                </Alert>
+              )}
+            </div>
+
             <Button
               variant="destructive"
               className="w-fit"
-              onClick={handleCloseSession}
+              onClick={() => setCloseDialogOpen(true)}
               disabled={closeSession.isPending}
             >
               Clôturer la session
             </Button>
-            {closeSession.isError && (
-              <Alert variant="destructive">
-                <AlertCircle className="size-4" />
-                <AlertDescription>{closeSession.error.message}</AlertDescription>
-              </Alert>
-            )}
           </CardContent>
         </Card>
       )}
 
-      {!closed && !hasActiveSession && (
+      <Dialog open={closeDialogOpen} onOpenChange={setCloseDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Clôturer la session ?</DialogTitle>
+            <DialogDescription>
+              Après clôture, plus aucun dépôt ni correction de relecture ne sera possible
+              (RG9, RG10). Cette action est définitive.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCloseDialogOpen(false)}>
+              Annuler
+            </Button>
+            <Button variant="destructive" onClick={handleConfirmClose} disabled={closeSession.isPending}>
+              Confirmer la clôture
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {!hasActiveSession && !justClosed && (
         <Card className="max-w-md">
           <CardHeader>
             <CardTitle>Ouvrir une session</CardTitle>
@@ -197,9 +289,22 @@ export function TrainerHome() {
                 placeholder="Ex. Cours React — semaine 3"
               />
             </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="session-duree">Durée (minutes)</Label>
+              <Input
+                id="session-duree"
+                type="number"
+                min={15}
+                max={480}
+                step={15}
+                value={duree}
+                onChange={(event) => setDuree(Number(event.target.value))}
+                className="w-28"
+              />
+            </div>
             <Button
               onClick={handleOpenSession}
-              disabled={!titre.trim() || openSession.isPending}
+              disabled={!titre.trim() || duree < 15 || duree > 480 || openSession.isPending}
               className="w-fit"
             >
               Ouvrir la session
@@ -213,6 +318,52 @@ export function TrainerHome() {
           </CardContent>
         </Card>
       )}
+
+      <div className="flex flex-col gap-3">
+        <h2 className="text-xl font-semibold">Sessions de la promotion</h2>
+        {sessions.isLoading && <Skeleton className="h-8 w-full" />}
+        {sessions.isError && (
+          <Alert variant="destructive">
+            <AlertCircle className="size-4" />
+            <AlertDescription>{sessions.error.message}</AlertDescription>
+          </Alert>
+        )}
+        {sessions.data && sessions.data.length === 0 && (
+          <p className="text-sm text-muted-foreground">Aucune session pour le moment.</p>
+        )}
+        {sessions.data && sessions.data.length > 0 && (
+          <div className="rounded-lg border border-border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Titre</TableHead>
+                  <TableHead>Statut</TableHead>
+                  <TableHead>Ouverture</TableHead>
+                  <TableHead />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {sessions.data.map((s) => (
+                  <TableRow key={s.id} data-testid={`session-row-${s.id}`}>
+                    <TableCell className="font-medium">{s.titre}</TableCell>
+                    <TableCell>
+                      <Badge variant={s.statut === 'OUVERTE' ? 'success' : 'outline'}>
+                        {statutLabel[s.statut] ?? s.statut}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{new Date(s.ouvertureAt).toLocaleString('fr-FR')}</TableCell>
+                    <TableCell>
+                      <Button variant="link" className="h-auto p-0" onClick={() => handleReopen(s.id)}>
+                        Reprendre
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </div>
 
       <div className="flex flex-col gap-3">
         <h2 className="text-xl font-semibold">Tableau de la promotion</h2>

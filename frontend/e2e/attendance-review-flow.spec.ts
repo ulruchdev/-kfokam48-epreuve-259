@@ -1,9 +1,10 @@
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test } from '@playwright/test'
+import { pickIdentity } from './helpers.js'
 
 /**
  * End-to-end flow across three independent browser contexts (trainer, two
  * students — the second student then switches to the reviewer role from the
- * identity screen, exactly as EF10 allows: any student can pick any role).
+ * landing page, exactly as EF10 allows: any student can pick any role).
  *
  * Requires the full stack up: `docker compose up --build` (db + backend +
  * frontend on :5173). Demo data is promotion id 1 with six students
@@ -16,31 +17,6 @@ import { expect, test, type Page } from '@playwright/test'
  * B's attendance then retries the draw and B becomes the reviewer. This
  * exercises RG15's retry-on-new-presence, not just the EF4 happy path.
  */
-
-async function pickIdentity(
-  page: Page,
-  options: {
-    studentIndex: number
-    role: 'Formateur' | 'Étudiant' | 'Relecteur'
-  },
-): Promise<string> {
-  await page.goto('/')
-  await page.getByLabel(/promotion/i).selectOption({ index: 1 })
-
-  const roster = page.getByRole('radiogroup', { name: /étudiant/i })
-  const radio = roster.getByRole('radio').nth(options.studentIndex)
-  const name = (await radio.evaluate((el) => el.closest('label')?.textContent?.trim())) ?? ''
-  await radio.check()
-
-  await page
-    .getByRole('radiogroup', { name: /rôle/i })
-    .getByRole('radio', { name: options.role })
-    .check()
-  await page.getByRole('button', { name: /entrer/i }).click()
-
-  return name
-}
-
 test('trainer opens a session, a student deposits an exercise, a second student is drawn as reviewer and grades it, and the dashboard shows the average', async ({
   browser,
 }) => {
@@ -52,12 +28,14 @@ test('trainer opens a session, a student deposits an exercise, a second student 
   const studentAPage = await studentACtx.newPage()
   const studentBPage = await studentBCtx.newPage()
 
-  // 1. Trainer opens the session and gets the code, shown big (EF1).
+  // 1. Trainer opens the session (default 120 min duration) and gets the
+  //    code, shown big with a live countdown (EF1, US-40).
   await pickIdentity(trainerPage, { studentIndex: 0, role: 'Formateur' })
   await trainerPage.getByLabel(/titre de la session/i).fill(`E2E ${Date.now()}`)
   await trainerPage.getByRole('button', { name: /ouvrir la session/i }).click()
   const code = (await trainerPage.getByTestId('session-code').textContent())?.trim()
   expect(code).toBeTruthy()
+  await expect(trainerPage.getByTestId('code-countdown')).toContainText(/expire dans/i)
 
   // 2. Student A marks attendance with that code (EF2) and deposits their
   //    exercise link (EF3), alone in the session so far.
@@ -78,8 +56,9 @@ test('trainer opens a session, a student deposits an exercise, a second student 
   await studentBPage.getByRole('button', { name: /valider ma présence/i }).click()
   await expect(studentBPage.getByTestId('attendance-confirmation')).toBeVisible()
 
-  // 4. Student B switches to the reviewer role and grades A's exercise (EF5).
-  await studentBPage.getByRole('button', { name: /changer/i }).click()
+  // 4. Student B switches to the reviewer role (header "Changer de rôle",
+  //    back to the landing page) and grades A's exercise (EF5).
+  await studentBPage.getByRole('button', { name: /changer de rôle/i }).click()
   await pickIdentity(studentBPage, { studentIndex: 2, role: 'Relecteur' })
   const reviewRow = studentBPage
     .locator('[data-testid^="review-row-"]')

@@ -10,6 +10,10 @@ export const demoTableau = demoStudents.map((student, index) => ({
   relecturesEnAttente: 0,
 }))
 
+function inMinutes(minutes: number): string {
+  return new Date(Date.now() + minutes * 60_000).toISOString()
+}
+
 export const trainerHandlers = [
   http.post('/api/sessions', async ({ request }) => {
     const body = (await request.json()) as { titre: string; promotionId: number }
@@ -17,9 +21,9 @@ export const trainerHandlers = [
       {
         id: 42,
         code: 'AB12CD',
-        ouvertureAt: '2026-09-25T09:00:00Z',
-        expirationAt: '2026-09-25T09:15:00Z',
-        finAt: '2026-09-25T11:00:00Z',
+        ouvertureAt: new Date().toISOString(),
+        expirationAt: inMinutes(15),
+        finAt: inMinutes(120),
         statut: 'OUVERTE',
         titre: body.titre,
       },
@@ -33,12 +37,25 @@ export const trainerHandlers = [
       promotionId: 1,
       titre: 'Session recouvrée',
       code: 'XY99ZZ',
-      ouvertureAt: '2026-09-25T09:00:00Z',
-      expirationAt: '2026-09-25T09:15:00Z',
-      finAt: '2026-09-25T11:00:00Z',
+      ouvertureAt: new Date().toISOString(),
+      expirationAt: inMinutes(15),
+      finAt: inMinutes(120),
       statut: 'OUVERTE',
     }),
   ),
+  http.put('/api/sessions/:id', async ({ params, request }) => {
+    const body = (await request.json()) as { finAt: string }
+    return HttpResponse.json({
+      id: Number(params.id),
+      promotionId: 1,
+      titre: 'Cours React',
+      code: 'AB12CD',
+      ouvertureAt: new Date().toISOString(),
+      expirationAt: inMinutes(15),
+      finAt: body.finAt,
+      statut: 'OUVERTE',
+    })
+  }),
   http.get('/api/tableau', () => HttpResponse.json(demoTableau)),
   http.post('/api/sessions/:id/presences', async ({ params, request }) => {
     const body = (await request.json()) as { etudiantId: number }
