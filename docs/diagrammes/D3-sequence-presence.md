@@ -1,10 +1,9 @@
 # D3 — Sequence: "mark attendance"
 
 > Mandatory diagram. Nominal case plus the two required error cases
-> (expired code → 410, already present → 409) and the anti-guessing lock
-> (400 TOO_MANY_ATTEMPTS — RG3, kept inside the imposed 400 status for strict
-> B2 compliance). HTTP codes match `api/contrat.yaml` exactly; error bodies match
-> the imposed format `{"code", "message"}`.
+> (expired code → 410, already present → 409), the unknown student (404, DEC-9) and the
+> anti-guessing lock (429 TOO_MANY_ATTEMPTS — RG3, DEC-9). HTTP codes match
+> `api/contrat.yaml` exactly; error bodies match the imposed format `{"code", "message"}`.
 
 ```mermaid
 sequenceDiagram
@@ -16,12 +15,12 @@ sequenceDiagram
 
     E->>F: types the presence code
     F->>C: POST /api/presences { code, etudiantId }
-    C->>C: @Valid body (400 CHAMP_MANQUANT if invalid)
+    C->>C: @Valid body (400 CHAMP_MANQUANT / CORPS_INVALIDE if invalid)
     C->>S: markAttendance(code, etudiantId)
     S->>DB: load student (etudiantId)
     alt unknown student
         S-->>C: EtudiantInconnuException
-        C-->>F: 400 { code: "ETUDIANT_INCONNU", message: "..." }
+        C-->>F: 404 { code: "ETUDIANT_INCONNU", message: "..." }
     end
     S->>DB: find session by code
     alt unknown code
@@ -29,7 +28,7 @@ sequenceDiagram
         S->>S: 5th failure? -> lock 2 minutes (RG3)
         C-->>F: 400 { code: "CODE_INCONNU", message: "..." }
     else locked out (RG3: 5 failures reached)
-        C-->>F: 400 { code: "TOO_MANY_ATTEMPTS", message: "..." }
+        C-->>F: 429 { code: "TOO_MANY_ATTEMPTS", message: "..." }
     else code expired (RG1: 15 min after opening) or session ended (RG2)
         S-->>C: CodeExpireException
         C-->>F: 410 { code: "CODE_EXPIRE", message: "Le code de presence a expire." }
@@ -51,8 +50,8 @@ sequenceDiagram
 |---|---|---|---|
 | Missing/invalid field | 400 | `CHAMP_MANQUANT` | `POST /api/presences` 400 |
 | Unknown code | 400 | `CODE_INCONNU` | `POST /api/presences` 400 |
-| Unknown student | 400 | `ETUDIANT_INCONNU` | extension (400) |
-| 5 wrong attempts | 400 | `TOO_MANY_ATTEMPTS` | `POST /api/presences` 400 (RG3, Q4 — no new status on an imposed operation, B2) |
+| Unknown student | 404 | `ETUDIANT_INCONNU` | `POST /api/presences` 404 (DEC-9) |
+| 5 wrong attempts | 429 | `TOO_MANY_ATTEMPTS` | `POST /api/presences` 429 (RG3, Q4, DEC-9) |
 | Expired code / session ended | 410 | `CODE_EXPIRE` | `POST /api/presences` 410 |
 | Already present | 409 | `DEJA_PRESENT` | `POST /api/presences` 409 |
 | Success | 201 | — (body `id, sessionId, etudiantId, source`) | `POST /api/presences` 201 |

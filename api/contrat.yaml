@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Contrat API — KFOKAM48 Épreuve (Attendance & Peer Review Tracker)
-  version: "1.1"
+  version: "1.2"
   description: |
     Les cinq opérations imposées par le sujet existent EXACTEMENT ainsi :
     mêmes chemins, mêmes verbes, mêmes codes de statut, même format d'erreur.
@@ -9,10 +9,13 @@ info:
     Politique d'extension (additive uniquement) :
     - des propriétés OPTIONNELLES peuvent s'ajouter aux corps requis (dureeMinutes, finAt) ;
     - de NOUVEAUX endpoints /api/* sont libres ;
-    - de NOUVEAUX codes d'erreur peuvent s'ajouter DANS un statut déjà imposé
-      (ex. 400 = LIEN_INVALIDE ou PRESENCE_REQUISE ou TOO_MANY_ATTEMPTS) —
-      jamais de retrait ni de renommage, et AUCUN statut ajouté sur les opérations
-      imposées (les statuts de la règle RG3/Q4 passent par le 400 déjà imposé) ;
+    - de NOUVEAUX codes d'erreur peuvent s'ajouter ; aucun statut imposé n'est retiré ni renommé ;
+    - DEC-9 (sémantique HTTP) : chaque erreur porte son vrai statut —
+      400 entrée invalide · 403 action interdite à cet acteur · 404 ressource inconnue
+      (chemin OU corps) · 405 méthode non autorisée · 409 conflit d'état · 410 code expiré ·
+      415 corps non JSON · 429 trop de tentatives (RG3) · 500 imprévu uniquement ;
+    - codes transverses : CORPS_INVALIDE (400), PARAMETRE_MANQUANT (400),
+      PARAMETRE_INVALIDE (400), METHODE_NON_AUTORISEE (405), TYPE_NON_SUPPORTE (415) ;
     - le format d'erreur {"code", "message"} vaut pour TOUTES les erreurs, sans exception.
 
 servers:
@@ -59,7 +62,8 @@ paths:
                     type: string
                     enum: [OUVERTE, TERMINEE, CLOTUREE]
                     description: "Extension additive."
-        "400": { $ref: "#/components/responses/Erreur" }   # CHAMP_MANQUANT, PROMOTION_INCONNUE
+        "400": { $ref: "#/components/responses/Erreur" }   # CHAMP_MANQUANT
+        "404": { $ref: "#/components/responses/Erreur" }   # PROMOTION_INCONNUE (DEC-9)
     get:
       summary: "[LIBRE] Liste des sessions d'une promotion"
       parameters:
@@ -104,16 +108,18 @@ paths:
                   sessionId: { type: integer, format: int64 }
                   etudiantId: { type: integer, format: int64 }
                   source: { type: string, enum: [ETUDIANT, FORMATEUR] }
-        "400": { $ref: "#/components/responses/Erreur" }   # CODE_INCONNU, ETUDIANT_INCONNU, TOO_MANY_ATTEMPTS (RG3 : 5 erreurs -> blocage 2 min, Q4)
+        "400": { $ref: "#/components/responses/Erreur" }   # CODE_INCONNU, CHAMP_MANQUANT
+        "404": { $ref: "#/components/responses/Erreur" }   # ETUDIANT_INCONNU (DEC-9)
         "409": { $ref: "#/components/responses/Erreur" }   # DEJA_PRESENT
         "410": { $ref: "#/components/responses/Erreur" }   # CODE_EXPIRE
+        "429": { $ref: "#/components/responses/Erreur" }   # TOO_MANY_ATTEMPTS (RG3 : 5 erreurs -> blocage 2 min, Q4)
 
   /api/exercices:
     post:
       summary: "[IMPOSÉ] Un étudiant dépose le lien de son exercice"
       description: |
         Extension additive (DEC-4/RG14) : l'étudiant doit avoir marqué sa présence à la
-        session, sinon 400 PRESENCE_REQUISE (statut déjà imposé, code distinct).
+        session, sinon 400 PRESENCE_REQUISE.
       requestBody:
         required: true
         content:
@@ -136,8 +142,9 @@ paths:
                 properties:
                   id: { type: integer, format: int64 }
                   statut: { type: string, enum: [EN_ATTENTE_AFFECTATION, EN_ATTENTE_RELECTURE, RELU] }
-        "400": { $ref: "#/components/responses/Erreur" }   # LIEN_INVALIDE, PRESENCE_REQUISE, ETUDIANT_INCONNU, SESSION_INCONNUE, SESSION_CLOTUREE
-        "409": { $ref: "#/components/responses/Erreur" }   # EXERCICE_DEJA_DEPOSE
+        "400": { $ref: "#/components/responses/Erreur" }   # LIEN_INVALIDE, PRESENCE_REQUISE, CHAMP_MANQUANT
+        "404": { $ref: "#/components/responses/Erreur" }   # SESSION_INCONNUE, ETUDIANT_INCONNU (DEC-9)
+        "409": { $ref: "#/components/responses/Erreur" }   # EXERCICE_DEJA_DEPOSE, SESSION_CLOTUREE
 
   /api/relectures/{id}:
     post:
@@ -161,6 +168,7 @@ paths:
         "200": { description: Relecture enregistrée }
         "400": { $ref: "#/components/responses/Erreur" }   # NOTE_INVALIDE
         "403": { $ref: "#/components/responses/Erreur" }   # AUTO_RELECTURE, RELECTURE_NON_ASSIGNEE
+        "404": { $ref: "#/components/responses/Erreur" }   # RELECTURE_INCONNUE (DEC-9)
         "409": { $ref: "#/components/responses/Erreur" }   # RELECTURE_DEJA_RENDUE, SESSION_CLOTUREE
     put:
       summary: "[LIBRE] Le relecteur corrige sa relecture tant que la session n'est pas clôturée"
@@ -350,8 +358,8 @@ paths:
                   sessionId: { type: integer, format: int64 }
                   etudiantId: { type: integer, format: int64 }
                   source: { type: string, enum: [FORMATEUR] }
-        "400": { $ref: "#/components/responses/Erreur" }   # ETUDIANT_INCONNU
-        "404": { $ref: "#/components/responses/Erreur" }   # SESSION_INCONNUE
+        "400": { $ref: "#/components/responses/Erreur" }   # CHAMP_MANQUANT, ETUDIANT_HORS_PROMOTION
+        "404": { $ref: "#/components/responses/Erreur" }   # SESSION_INCONNUE, ETUDIANT_INCONNU
         "409": { $ref: "#/components/responses/Erreur" }   # DEJA_PRESENT, SESSION_CLOTUREE
 
   /api/sessions/{id}/exercices:
@@ -420,6 +428,7 @@ paths:
                 items:
                   $ref: "#/components/schemas/RelectureAssignee"
         "400": { $ref: "#/components/responses/Erreur" }   # PARAMETRE_MANQUANT
+        "404": { $ref: "#/components/responses/Erreur" }   # ETUDIANT_INCONNU
 
   /api/etudiants/{etudiantId}/exercices:
     get:

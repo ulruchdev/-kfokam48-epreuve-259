@@ -108,7 +108,7 @@ tirage au sort du relecteur (RG6/RG15), calcul de la moyenne (EF6, F3).
 | ENF1 | L'interface de marquage de présence est utilisable sur un téléphone (usage réel en salle) | Les 3 écrans critiques (présence, dépôt, relecture) passent une largeur de 360 px sans scroll horizontal ; vérifié manuellement en responsive Chrome |
 | ENF2 | Le tableau répond en moins de 2 s pour une promotion de 60 étudiants | La requête du tableau est une seule requête SQL agrégée (pas de N+1) ; mesuré avec 60 étudiants + 10 sessions de démo |
 | ENF3 | Le code de présence n'est pas énumérable | Le code est généré aléatoirement (≥ 6 caractères alphanumériques), et 5 erreurs successives déclenchent un blocage de 2 min (RG3) ; test unitaire |
-| ENF4 | Toute erreur 4xx/5xx renvoie le format imposé `{"code", "message"}` | `@RestControllerAdvice` unique ; test d'intégration sur chaque famille d'erreur du contrat — aucune stack trace possible |
+| ENF4 | Toute erreur 4xx/5xx renvoie le format imposé `{"code", "message"}` avec son vrai statut HTTP (DEC-9) | `@RestControllerAdvice` unique ; test d'intégration sur chaque famille d'erreur du contrat — aucune stack trace possible |
 | ENF5 | L'application démarre chez un tiers sans base locale | `docker compose up` seul ; les tests d'intégration utilisent Testcontainers ; vérifié par clonage dans un dossier vide |
 | ENF6 | L'historique du code est versionné et lisible | Migrations Flyway commitées, `ddl-auto = validate` ; schéma = miroir du diagramme D2 |
 
@@ -118,7 +118,7 @@ tirage au sort du relecteur (RG6/RG15), calcul de la moyenne (EF6, F3).
 |---|---|---|
 | RG1 | Le code de présence expire 15 minutes après l'ouverture de la session | Q2 |
 | RG2 | Après la fin de la session, le code ne fonctionne plus (`410 CODE_EXPIRE`) | Q3 + DEC-2 |
-| RG3 | Au bout de 5 erreurs de code, l'étudiant est bloqué 2 minutes (`400 TOO_MANY_ATTEMPTS` — code distinct dans le statut 400 déjà imposé, aucun statut ajouté sur une opération imposée, B2) | Q4 |
+| RG3 | Au bout de 5 erreurs de code, l'étudiant est bloqué 2 minutes (`429 TOO_MANY_ATTEMPTS`, DEC-9) | Q4 |
 | RG4 | Un étudiant ne peut jamais relire son propre exercice (`403 AUTO_RELECTURE`) | Q5 |
 | RG5 | Un seul relecteur par exercice (`UNIQUE(exercice_id)`) | Q6 |
 | RG6 | Le relecteur est choisi par le système, au hasard, parmi les étudiants présents à la session, auteur exclu | Q7 |
@@ -156,6 +156,7 @@ tirage au sort du relecteur (RG6/RG15), calcul de la moyenne (EF6, F3).
 | Une promotion peut-elle avoir plusieurs sessions actives ? | Silence du client | **DEC-5** : oui, mais le **code** est unique parmi les sessions non clôturées (sinon le tirage du relecteur par session serait ambigu) | `UNIQUE` partiel côté code : unicité vérifiée en service parmi `statut != CLOTUREE` |
 | Que voit un étudiant des sessions disponibles ? | Silence | **DEC-6** : uniquement les sessions de sa promotion, les plus récentes d'abord (`GET /api/sessions?promotionId=`) | L'écran étudiant liste les sessions où agir (présence / dépôt / relecture) |
 | Le relecteur peut-il être assigné deux fois dans la même session ? | Silence | **DEC-7** : le tirage équilibre — un présent déjà relecteur d'un exercice en attente de la session n'est retiré du hasard que si tous les autres présents éligibles le sont aussi | Évite qu'un étudiant concentre toutes les relectures quand 3+ présents |
+| Quel statut HTTP pour une erreur que le contrat imposé n'énumère pas ? | Silence : le contrat liste les erreurs attendues, pas toutes les erreurs possibles | **DEC-9** : chaque erreur porte son vrai statut — 400 entrée invalide, 403 interdit, 404 ressource inconnue (chemin ou corps), 405, 409 conflit d'état, 410 expiré, 415, 429 trop de tentatives ; 500 réservé à l'imprévu | Tous les statuts imposés restent présents ; un client HTTP standard interprète chaque réponse sans lire le code métier |
 | La moyenne du tableau inclut-elle les notes corrigées ? | Silence | **DEC-8** : oui — la moyenne est recalculée sur les notes **courantes** (RG9), calculée par l'API, jamais par le front (F3) | `moyenne` = moyenne arithmétique des notes rendues de la promotion, `null` si aucune |
 
 ## 8. Contraintes techniques
@@ -222,3 +223,4 @@ l'hygiène Git (15 pts) ni la soumission.
 |---|---|---|
 | 1 | 2026-09-25 | Version initiale (étape 1) — sera révisée après l'ouverture de l'enveloppe (étape 3) |
 | 2 | 2026-09-25 | Amendements du sujet : « ticket » devient « issue » partout ; commit de vérification du dépôt nommé `chore: verification du depot` (jamais un `[JALON]`) ; étape git-lab supprimée — cinq étapes, la soumission devient l'étape 5 ; l'enveloppe se demande au surveillant une fois `[JALON] v0.1` poussé |
+| 3 | 2026-09-25 | DEC-9 : chaque erreur porte son vrai statut HTTP (404 ressource inconnue, 429 pour RG3, 405/415 protocolaires) au lieu d'être rabattue sur un statut déjà imposé ; RG3, ENF4, D1, D3 et contrat v1.2 mis à jour |
