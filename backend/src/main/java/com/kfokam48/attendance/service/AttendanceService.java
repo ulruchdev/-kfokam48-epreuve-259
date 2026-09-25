@@ -49,8 +49,10 @@ public class AttendanceService {
             throw new TooManyAttemptsException();
         }
 
-        var session = sessions.findByCodeAndStatusNot(code.trim(), CourseSession.Status.CLOTUREE);
+        String typedCode = code.trim();
+        var session = sessions.findByCodeAndStatusNot(typedCode, CourseSession.Status.CLOTUREE);
         if (session.isEmpty()) {
+            requireCodeNotFromClosedSession(typedCode);   // RG2: a real but closed code → 410
             registerFailure(student);                     // RG3: count, lock at the 5th
             throw new CodeUnknownException();
         }
@@ -127,6 +129,13 @@ public class AttendanceService {
     private void requireCodeStillValid(CourseSession session) {
         OffsetDateTime now = OffsetDateTime.now();
         if (session.endedAt(now) || session.codeExpiredAt(now)) {
+            throw new CodeExpiredException();
+        }
+    }
+
+    /** A code that existed but whose session is closed "no longer works" (Q3): not a guess. */
+    private void requireCodeNotFromClosedSession(String code) {
+        if (sessions.existsByCodeAndStatus(code, CourseSession.Status.CLOTUREE)) {
             throw new CodeExpiredException();
         }
     }

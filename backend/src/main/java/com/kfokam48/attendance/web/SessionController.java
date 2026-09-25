@@ -52,6 +52,13 @@ public class SessionController {
         return sessionService.adjustEnd(id, request);
     }
 
+    /** [LIBRE] POST /api/sessions/{id}/cloture → 204 (EF8). */
+    @PostMapping("/sessions/{id}/cloture")
+    public ResponseEntity<Void> close(@PathVariable Long id) {
+        sessionService.close(id);
+        return ResponseEntity.noContent().build();
+    }
+
     /** [LIBRE] POST /api/sessions/{id}/presences → 201 source=FORMATEUR (EF7/RG12). */
     @PostMapping("/sessions/{id}/presences")
     public ResponseEntity<Dto.AttendanceResponse> addManualAttendance(

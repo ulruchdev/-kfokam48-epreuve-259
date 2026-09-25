@@ -111,7 +111,7 @@ paths:
         "400": { $ref: "#/components/responses/Erreur" }   # CODE_INCONNU, CHAMP_MANQUANT
         "404": { $ref: "#/components/responses/Erreur" }   # ETUDIANT_INCONNU (DEC-9)
         "409": { $ref: "#/components/responses/Erreur" }   # DEJA_PRESENT
-        "410": { $ref: "#/components/responses/Erreur" }   # CODE_EXPIRE
+        "410": { $ref: "#/components/responses/Erreur" }   # CODE_EXPIRE (15 min, fin de session, ou session clôturée)
         "429": { $ref: "#/components/responses/Erreur" }   # TOO_MANY_ATTEMPTS (RG3 : 5 erreurs -> blocage 2 min, Q4)
 
   /api/exercices:

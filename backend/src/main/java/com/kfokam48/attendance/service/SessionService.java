@@ -69,6 +69,17 @@ public class SessionService {
         return toDetail(sessions.save(session));
     }
 
+    /** EF8 / RG9 / RG10: freezes submissions, attendance and review amendments. */
+    @Transactional
+    public void close(Long id) {
+        CourseSession session = loadSession(id);
+        if (session.getStatus() == CourseSession.Status.CLOTUREE) {
+            throw new SessionAlreadyClosedException();
+        }
+        session.setStatus(CourseSession.Status.CLOTUREE);
+        sessions.save(session);
+    }
+
     // ---------- private steps ----------
 
     private void requirePromotionExists(Long promotionId) {
