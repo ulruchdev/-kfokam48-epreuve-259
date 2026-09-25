@@ -55,7 +55,7 @@ test('should_render_grade_0_20_and_comment_for_a_rendered_review_EF5', async () 
   await waitFor(() => {
     expect(screen.getByText(`${done.note}/20`)).toBeInTheDocument()
   })
-  expect(screen.getByText(done.commentaire)).toBeInTheDocument()
+  expect(screen.getByText(done.commentaire!)).toBeInTheDocument()
 })
 
 test('should_submit_a_pending_review_EF5', async () => {
