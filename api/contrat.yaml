@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Contrat API — KFOKAM48 Épreuve (Attendance & Peer Review Tracker)
-  version: "1.2"
+  version: "1.3"
   description: |
     Les cinq opérations imposées par le sujet existent EXACTEMENT ainsi :
     mêmes chemins, mêmes verbes, mêmes codes de statut, même format d'erreur.
@@ -149,6 +149,7 @@ paths:
   /api/relectures/{id}:
     post:
       summary: "[IMPOSÉ] Un relecteur rend sa note et son commentaire"
+      description: "Étape 3 : chaque exercice a deux relecteurs (RG5). Une relecture rendue est définitive (RG9, Q15) ; l'exercice passe à RELU quand les deux sont rendues (RG16)."
       parameters:
         - name: id
           in: path
@@ -174,35 +175,6 @@ paths:
         "403": { $ref: "#/components/responses/Erreur" }   # AUTO_RELECTURE, RELECTURE_NON_ASSIGNEE
         "404": { $ref: "#/components/responses/Erreur" }   # RELECTURE_INCONNUE (DEC-9)
         "409": { $ref: "#/components/responses/Erreur" }   # RELECTURE_DEJA_RENDUE, SESSION_CLOTUREE
-    put:
-      summary: "[LIBRE] Le relecteur corrige sa relecture tant que la session n'est pas clôturée"
-      description: "RG9 / DEC-1 (Q10 retenu contre Q15). Après clôture : 409 SESSION_CLOTUREE."
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema: { type: integer, format: int64 }
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [note, commentaire]
-              properties:
-                note: { type: integer, minimum: 0, maximum: 20 }
-                commentaire: { type: string }
-      responses:
-        "200":
-          description: Relecture corrigée
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Relecture"
-        "400": { $ref: "#/components/responses/Erreur" }   # NOTE_INVALIDE
-        "403": { $ref: "#/components/responses/Erreur" }   # RELECTURE_NON_ASSIGNEE
-        "404": { $ref: "#/components/responses/Erreur" }   # RELECTURE_INCONNUE
-        "409": { $ref: "#/components/responses/Erreur" }   # SESSION_CLOTUREE, RELECTURE_NON_RENDUE
 
   /api/tableau:
     get:
@@ -230,6 +202,9 @@ paths:
                     exercicesDeposes: { type: integer }
                     moyenne: { type: number, nullable: true }
                     relecturesEnAttente: { type: integer }
+                    moyenneProvisoire:
+                      type: boolean
+                      description: "Extension additive (étape 3, RG16) : true si la moyenne inclut au moins une note retenue provisoire."
                     presencesFormateur:
                       type: integer
                       description: "Extension additive (EF7, Q14) : présences ajoutées à la main par le formateur, incluses dans presences." 
@@ -505,24 +480,21 @@ components:
         - $ref: "#/components/schemas/Exercice"
         - type: object
           properties:
-            relecture:
+            evaluation:
               type: object
               nullable: true
-              description: "Null si aucune relecture rendue. Jamais le nom du relecteur (RG7)."
-              required: [note, commentaire]
+              description: "Étape 3 (RG16). Null si aucune relecture rendue. Jamais l'identité des relecteurs (RG7)."
+              required: [note, provisoire, commentaires]
               properties:
-                note: { type: integer, minimum: 0, maximum: 20 }
-                commentaire: { type: string }
-    Relecture:
-      type: object
-      required: [id, exerciceId, relecteurId, note, commentaire, rendue]
-      properties:
-        id: { type: integer, format: int64 }
-        exerciceId: { type: integer, format: int64 }
-        relecteurId: { type: integer, format: int64 }
-        note: { type: integer, minimum: 0, maximum: 20, nullable: true }
-        commentaire: { type: string, nullable: true }
-        rendue: { type: boolean }
+                note:
+                  type: number
+                  description: "Note retenue = moyenne des notes rendues (peut valoir 13.5)"
+                provisoire:
+                  type: boolean
+                  description: "true tant qu'une seule des deux relectures est rendue"
+                commentaires:
+                  type: array
+                  items: { type: string }
     RelectureAssignee:
       type: object
       required: [id, exerciceId, exerciceLien, auteurNom, rendue]
