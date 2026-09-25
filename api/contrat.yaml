@@ -164,6 +164,10 @@ paths:
               properties:
                 note: { type: integer, minimum: 0, maximum: 20 }
                 commentaire: { type: string }
+                relecteurId:
+                  type: integer
+                  format: int64
+                  description: "Extension additive optionnelle : identité choisie en liste (Q1). Si présente, 403 AUTO_RELECTURE pour l'auteur (RG4) et 403 RELECTURE_NON_ASSIGNEE pour un autre étudiant. Une note non entière (12.5) donne 400 NOTE_INVALIDE."
       responses:
         "200": { description: Relecture enregistrée }
         "400": { $ref: "#/components/responses/Erreur" }   # NOTE_INVALIDE

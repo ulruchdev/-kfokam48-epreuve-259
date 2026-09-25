@@ -1,5 +1,6 @@
 package com.kfokam48.attendance.web.erreur;
 
+import com.fasterxml.jackson.databind.JsonMappingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -42,11 +43,23 @@ public class GlobalExceptionHandler {
                 .body(new ApiError("CHAMP_MANQUANT", "Champ(s) manquant(s) ou invalide(s) : " + fields));
     }
 
-    /** Missing or malformed JSON body → 400 CORPS_INVALIDE. */
+    /**
+     * Missing or malformed JSON body → 400 CORPS_INVALIDE; a non-integer grade
+     * (e.g. 12.5 or "abc") → 400 NOTE_INVALIDE (RG8).
+     */
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ApiError> onUnreadable(HttpMessageNotReadableException ex) {
+        if (isInvalidGrade(ex)) {
+            return ResponseEntity.badRequest()
+                    .body(new ApiError("NOTE_INVALIDE", "La note doit être un entier entre 0 et 20."));
+        }
         return ResponseEntity.badRequest()
                 .body(new ApiError("CORPS_INVALIDE", "Corps de la requête manquant ou mal formé."));
+    }
+
+    private boolean isInvalidGrade(HttpMessageNotReadableException ex) {
+        return ex.getCause() instanceof JsonMappingException mapping
+                && mapping.getPath().stream().anyMatch(ref -> "note".equals(ref.getFieldName()));
     }
 
     /** Path/query parameter of the wrong type → 400 PARAMETRE_INVALIDE. */
