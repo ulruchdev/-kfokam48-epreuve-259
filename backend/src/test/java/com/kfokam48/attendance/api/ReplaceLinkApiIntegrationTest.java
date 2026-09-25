@@ -30,7 +30,7 @@ class ReplaceLinkApiIntegrationTest extends AbstractPostgresIntegrationTest {
         ResponseEntity<Map> response = replace(f.exerciseId(), NEW_LINK);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).containsEntry("lien", NEW_LINK).containsEntry("statut", "EN_ATTENTE_RELECTURE");
+        assertThat(response.getBody()).containsEntry("lien", NEW_LINK).containsEntry("statut", "EN_ATTENTE_AFFECTATION");   // one peer: second reviewer missing
     }
 
     @Test
