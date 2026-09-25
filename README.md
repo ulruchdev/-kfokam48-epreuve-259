@@ -3,6 +3,9 @@
 Final fullstack assessment project: course session attendance with presence codes
 and peer review of student exercises, with a trainer dashboard.
 
+**Frontend: React (Vite + TypeScript)** — largest ecosystem and the stack the candidate masters
+best, so the time goes to the analysis and the Git discipline; `npm run build` passes (F1).
+
 ## Repository layout
 
 ```
@@ -22,25 +25,45 @@ conventional commits, three `[JALON]` milestone commits.
 | Layer    | Technology |
 |----------|------------|
 | Backend  | Java 21, Spring Boot, Maven, Flyway |
-| Frontend | React 19, Vite, TypeScript |
+| Frontend | React 19, Vite, TypeScript, Tailwind v4 + shadcn/ui, TanStack Query, zustand, axios, zod |
 | Database | PostgreSQL 17 |
 | Runtime  | Docker Compose (`db` + `backend` + `frontend`) |
 
 ## Status
 
 - [x] Repository setup (.gitignore, workflow, API contract)
-- [ ] Analysis & specification (cahier des charges, diagrams, backlog)
-- [ ] v0.1 — Must features
+- [x] Analysis & specification (cahier des charges, diagrams, backlog)
+- [x] v0.1 — Must features (backend, three screens, demo data, e2e)
 - [ ] Envelope (step 3)
 - [ ] v1.0 — final version
 
 ## Running
 
 ```bash
-docker compose up --build      # db (PostgreSQL 17) + backend on http://localhost:8080
+git clone https://github.com/ulruchdev/kfokam48-epreuve-259.git && cd kfokam48-epreuve-259
+docker compose up --build
 ```
 
-Demo data is loaded by Flyway at startup (promotion 1, six students).
+| Service | URL |
+|---|---|
+| Application (landing page, pick a role) | http://localhost:5173 |
+| API | http://localhost:8080/api |
+| Swagger UI | http://localhost:8080/swagger-ui.html |
+
+Demo data is loaded by Flyway at startup: promotion « KFOKAM48 - Promotion 2026 », six
+students, one closed past session with attendances (one added by the trainer), two graded
+exercises and one review never rendered.
+
+## Tests
+
+```bash
+cd backend && ./mvnw verify                 # unit + integration tests (Testcontainers, Docker needed)
+cd frontend && npm ci && npm run test:ci    # Vitest + Testing Library + MSW
+cd frontend && npx playwright install chromium
+cd frontend && npm run e2e                  # Playwright Chromium, app up with docker compose
+cd frontend && npm run e2e:headed           # same, visible browser, slowed down
+scripts/api-smoke.sh                        # 50 curl checks of every endpoint and error case
+```
 
 ## API documentation
 
