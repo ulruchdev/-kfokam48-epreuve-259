@@ -93,7 +93,8 @@ public final class Dto {
 
     /** GET /api/etudiants/{id}/exercices — author view, NEVER the reviewer name (RG7). */
     public record ExerciseWithReviewResponse(
-            Long id, Long sessionId, String lien, String statut, ReceivedReviewResponse review) {}
+            Long id, Long sessionId, Long etudiantId, String etudiantNom, String lien, String statut,
+            ReceivedReviewResponse relecture) {}
 
     public record ReceivedReviewResponse(Integer note, String commentaire) {}
 
