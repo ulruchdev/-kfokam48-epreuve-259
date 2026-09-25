@@ -117,6 +117,9 @@ parcours e2e à trois étudiants est écrit et listé par Playwright.
 
 ---
 
+etape5 soumission
+si j'avais plus de temps j'ajouterais l'impors par csv et ammeliorerais le design
+
 ## Étape 5 — Soumission
 
 **Fait :**
