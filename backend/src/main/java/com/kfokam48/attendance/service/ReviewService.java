@@ -4,15 +4,21 @@ import com.kfokam48.attendance.domain.CourseSession;
 import com.kfokam48.attendance.domain.Exercise;
 import com.kfokam48.attendance.domain.ExerciseStatus;
 import com.kfokam48.attendance.domain.Review;
+import com.kfokam48.attendance.domain.Student;
 import com.kfokam48.attendance.repository.CourseSessionRepository;
 import com.kfokam48.attendance.repository.ExerciseRepository;
 import com.kfokam48.attendance.repository.ReviewRepository;
+import com.kfokam48.attendance.repository.StudentRepository;
 import com.kfokam48.attendance.web.dto.Dto;
 import com.kfokam48.attendance.web.erreur.BusinessExceptions.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class ReviewService {
@@ -20,12 +26,14 @@ public class ReviewService {
     private final ReviewRepository reviews;
     private final ExerciseRepository exercises;
     private final CourseSessionRepository sessions;
+    private final StudentRepository students;
 
     public ReviewService(ReviewRepository reviews, ExerciseRepository exercises,
-                         CourseSessionRepository sessions) {
+                         CourseSessionRepository sessions, StudentRepository students) {
         this.reviews = reviews;
         this.exercises = exercises;
         this.sessions = sessions;
+        this.students = students;
     }
 
     /**
@@ -74,6 +82,29 @@ public class ReviewService {
 
         return new Dto.ReviewResponse(review.getId(), review.getExerciseId(), review.getReviewerId(),
                 review.getNote(), review.getCommentaire(), review.isRendered());
+    }
+
+    /** EF13: the reviewer's assignments with link and author, pending first. Three queries. */
+    @Transactional(readOnly = true)
+    public List<Dto.AssignedReviewResponse> listForReviewer(Long reviewerId) {
+        if (!students.existsById(reviewerId)) {
+            throw new StudentUnknownException(reviewerId);
+        }
+        List<Review> assigned = reviews.findByReviewerId(reviewerId);
+        Map<Long, Exercise> exerciseById = exercises.findAllById(assigned.stream().map(Review::getExerciseId).toList())
+                .stream().collect(Collectors.toMap(Exercise::getId, exercise -> exercise));
+        Map<Long, String> authorName = students.findAllById(exerciseById.values().stream().map(Exercise::getStudentId).toList())
+                .stream().collect(Collectors.toMap(Student::getId, Student::getNom));
+
+        return assigned.stream()
+                .sorted(Comparator.comparing(Review::isRendered))
+                .map(review -> {
+                    Exercise exercise = exerciseById.get(review.getExerciseId());
+                    return new Dto.AssignedReviewResponse(review.getId(), review.getExerciseId(), exercise.getLien(),
+                            authorName.get(exercise.getStudentId()), review.isRendered(),
+                            review.getNote(), review.getCommentaire());
+                })
+                .toList();
     }
 
     // ---------- private steps ----------
