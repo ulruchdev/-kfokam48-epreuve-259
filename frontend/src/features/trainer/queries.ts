@@ -1,7 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { listStudents } from '../../api/promotions'
 import { addManualPresence } from '../../api/presences'
-import { closeSession, getSession, listSessions, openSession, type OpenSessionInput } from '../../api/sessions'
+import {
+  closeSession,
+  getSession,
+  listSessions,
+  openSession,
+  setSessionEnd,
+  type OpenSessionInput,
+} from '../../api/sessions'
 import { getTableau } from '../../api/dashboard'
 
 export function useTrainerStudents(promotionId: number) {
@@ -61,6 +68,18 @@ export function useCloseSession(promotionId: number) {
     mutationFn: (sessionId: number) => closeSession(sessionId),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['sessions', promotionId] })
+    },
+  })
+}
+
+/** PUT /api/sessions/{id} {finAt} — DEC-2, 400 FIN_AVANT_OUVERTURE if before opening. */
+export function useAdjustSessionEnd(promotionId: number) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, finAt }: { id: number; finAt: string }) => setSessionEnd(id, finAt),
+    onSuccess: (data) => {
+      void queryClient.invalidateQueries({ queryKey: ['sessions', promotionId] })
+      queryClient.setQueryData(['session-detail', data.id], data)
     },
   })
 }
