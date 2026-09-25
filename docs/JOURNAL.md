@@ -1,24 +1,37 @@
-# Journal de bord — <matricule>
+# Journal de bord — TASSE TUEKAM Ulruch Baudrel (matricule 259)
 
-> Une entrée **par étape**, écrite **au moment où tu la termines**, pas à la fin de la journée.
-> Trois lignes suffisent. Un journal rédigé d'un bloc juste avant de soumettre se repère
-> immédiatement dans l'historique Git et ne compte pas.
-
-Chaque entrée répond aux trois mêmes questions :
-
-- **Fait** — ce que tu viens de terminer
-- **Bloqué** — ce qui t'a coûté du temps, et combien
-- **IA** — ce que tu lui as demandé, et **comment tu as vérifié sa réponse**
+> One entry per step, written **when the step is completed**.
+> Each entry answers: what was done, what blocked me (and how long),
+> what I asked the AI and **how I verified its answer**.
 
 ---
 
 ## Étape 1 — Analyse et conception
 
-**Fait :** cahier des charges (9 exigences fonctionnelles, 12 règles de gestion), les trois diagrammes en Mermaid, 11 issues créées, contrat d'API complété, commit `[JALON] analyse` poussé.
+**Fait :** read the full subject and CLIENT.md (16 answers); produced the cahier des
+charges with the 10 imposed sections — 13 functional requirements (EF1–EF13, 10 Must,
+3 Should), 15 business rules (RG1–RG15) each sourced from a `Qx` or a documented
+decision `DEC-x`; the Q10 vs Q15 contradiction resolved in favour of Q10; three blind
+spots surfaced and closed (end-of-session definition DEC-2, sole-attendee reviewer
+assignment DEC-3, missing promotions/students endpoints in the imposed contract);
+4 Mermaid diagrams in `docs/diagrammes/`; API contract completed (5 imposed operations
+untouched, 12 free endpoints, additive extensions only) and frozen before any code
+commit; commit `[JALON] analyse` pushed.
 
-**Bloqué :** 12 min sur la contradiction entre Q10 et Q15. Tranchée en faveur de Q10 : Q11 décrit un usage réel et concret du formateur, Q15 n'est qu'une intention générale. Noté en section 7.
+**Bloqué :** ~25 min on the H4 decision (attendance required to submit an exercise?):
+CLIENT.md is silent, Q16 suggests two independent counters; settled it as the client
+would (attendance required, RG14, `400 PRESENCE_REQUISE`) and documented the trade-off
+in CDC §7. ~10 min realizing the default branch of the new GitHub repo pointed at the
+bootstrap branch — fixed via `gh repo edit --default-branch main`.
 
-**IA :** m'a proposé un découpage en 18 tickets, j'en ai retenu 11. Les autres étaient des tâches techniques (« créer l'entité », « configurer Flyway »), pas des résultats utilisateur. Vérifié en relisant chaque titre : est-ce que le client le comprendrait ?
+**IA :** used the AI assistant for the requirement/rule numbering proposal, the first
+draft of the 4 diagrams, and the completion of the OpenAPI contract. **Verification:**
+re-read every RG against its Qx source in CLIENT.md one by one; checked each contract
+extension is strictly additive (no imposed path/verb/status removed — grep on the 5
+imposed operations); validated `api/contrat.yaml` with `npx js-yaml` (parse OK);
+cross-checked D3's HTTP codes against the contract table line by line; rejected the
+AI's first draft of DEC-4 (it recommended "no attendance required") in favour of my
+own decision, documented as such.
 
 ---
 
