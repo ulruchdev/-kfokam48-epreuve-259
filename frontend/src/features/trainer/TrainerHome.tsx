@@ -20,6 +20,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { useIdentityStore } from '../../stores/identityStore'
 import { CodeCountdown } from './CodeCountdown'
+import { formatAverage } from '../../lib/format'
 import {
   useAddManualPresence,
   useAdjustSessionEnd,
@@ -406,7 +407,7 @@ export function TrainerHome() {
                       )}
                     </TableCell>
                     <TableCell>{row.exercicesDeposes}</TableCell>
-                    <TableCell>{row.moyenne ?? '—'}</TableCell>
+                    <TableCell data-testid="dashboard-average">{formatAverage(row.moyenne)}</TableCell>
                     <TableCell>{row.relecturesEnAttente}</TableCell>
                   </TableRow>
                 ))}

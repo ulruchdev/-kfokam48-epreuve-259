@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { formatAverage } from '../src/lib/format'
 import { pickIdentity } from './helpers.js'
 
 /**
@@ -69,14 +70,19 @@ test('trainer opens a session, a student deposits an exercise, a second student 
   await reviewRow.getByRole('button', { name: /envoyer la relecture/i }).click()
   await expect(reviewRow.getByText('18/20')).toBeVisible()
 
-  // 5. The trainer reloads (no real-time refresh, §3) and sees the average
-  //    for student A on the dashboard (EF6).
+  // 5. The trainer reloads (no real-time refresh, §3) and sees student A's
+  //    average on the dashboard (EF6). The average covers every grade A ever
+  //    received (DEC-8, the demo seed included), so the screen is checked
+  //    against the value computed by the API, never recomputed here (F3).
   await trainerPage.reload()
+  const tableau = await (await trainerPage.request.get('/api/tableau?promotionId=1')).json()
+  const apiRow = tableau.find((row: { nom: string }) => row.nom === studentAName)
+  expect(apiRow.moyenne).not.toBeNull()
   const dashboardRow = trainerPage
     .getByTestId('dashboard-table')
     .getByRole('row')
     .filter({ hasText: studentAName })
-  await expect(dashboardRow).toContainText('18')
+  await expect(dashboardRow.getByTestId('dashboard-average')).toHaveText(formatAverage(apiRow.moyenne))
 
   await trainerCtx.close()
   await studentACtx.close()
