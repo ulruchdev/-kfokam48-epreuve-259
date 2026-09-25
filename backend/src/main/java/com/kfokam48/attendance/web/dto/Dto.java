@@ -1,5 +1,6 @@
 package com.kfokam48.attendance.web.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.kfokam48.attendance.web.erreur.MissingFieldException;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -20,7 +21,7 @@ public final class Dto {
     public record OpenSessionRequest(
             @NotBlank(message = "titre") String titre,
             @NotNull(message = "promotionId") Long promotionId,
-            Integer durationMinutes) {   // optional, DEC-2 default 120
+            @JsonProperty("dureeMinutes") Integer durationMinutes) {   // optional, DEC-2 default 120
 
         public int effectiveDuration() {
             if (durationMinutes == null) return 120;
@@ -47,7 +48,8 @@ public final class Dto {
     public record AddManualAttendanceRequest(
             @NotNull(message = "etudiantId") Long etudiantId) {}
 
-    public record AdjustEndTimeRequest(@NotNull(message = "finAt") OffsetDateTime endTime) {}
+    public record AdjustEndTimeRequest(
+            @JsonProperty("finAt") @NotNull(message = "finAt") OffsetDateTime endTime) {}
 
     public record ReplaceLinkRequest(@NotBlank(message = "lien") String lien) {}
 

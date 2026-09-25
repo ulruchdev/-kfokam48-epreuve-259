@@ -64,6 +64,14 @@ public final class BusinessExceptions {
         }
     }
 
+    /** DEC-2: the adjusted session end cannot precede the opening. */
+    public static class EndBeforeOpeningException extends ApiException {
+        public EndBeforeOpeningException() {
+            super("FIN_AVANT_OUVERTURE", HttpStatus.BAD_REQUEST,
+                    "L'heure de fin doit être postérieure à l'ouverture de la session.");
+        }
+    }
+
     public static class SessionAlreadyClosedException extends ApiException {
         public SessionAlreadyClosedException() {
             super("SESSION_DEJA_CLOTUREE", HttpStatus.CONFLICT, "La session est déjà clôturée.");
