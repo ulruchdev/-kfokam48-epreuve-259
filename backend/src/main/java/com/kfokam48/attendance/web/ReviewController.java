@@ -5,6 +5,8 @@ import com.kfokam48.attendance.web.dto.Dto;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api")
 public class ReviewController {
@@ -25,5 +27,11 @@ public class ReviewController {
     @PutMapping("/relectures/{id}")
     public Dto.ReviewResponse amend(@PathVariable Long id, @Valid @RequestBody Dto.SubmitReviewRequest request) {
         return reviewService.amend(id, request);
+    }
+
+    /** [LIBRE] GET /api/relectures?relecteurId= → 200 assignments, pending first (EF13). */
+    @GetMapping("/relectures")
+    public List<Dto.AssignedReviewResponse> assigned(@RequestParam Long relecteurId) {
+        return reviewService.listForReviewer(relecteurId);
     }
 }
