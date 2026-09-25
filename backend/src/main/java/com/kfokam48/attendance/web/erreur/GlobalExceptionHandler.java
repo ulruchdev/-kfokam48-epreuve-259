@@ -5,6 +5,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -40,18 +42,32 @@ public class GlobalExceptionHandler {
                 .body(new ApiError("CHAMP_MANQUANT", "Champ(s) manquant(s) ou invalide(s) : " + fields));
     }
 
-    /** Malformed JSON body → 400 CHAMP_MANQUANT. */
+    /** Missing or malformed JSON body → 400 CORPS_INVALIDE. */
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ApiError> onUnreadable(HttpMessageNotReadableException ex) {
         return ResponseEntity.badRequest()
-                .body(new ApiError("CHAMP_MANQUANT", "Corps de la requête manquant ou mal formé."));
+                .body(new ApiError("CORPS_INVALIDE", "Corps de la requête manquant ou mal formé."));
     }
 
-    /** Bad path/query parameter types → 400 CHAMP_MANQUANT. */
+    /** Path/query parameter of the wrong type → 400 PARAMETRE_INVALIDE. */
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ApiError> onTypeMismatch(MethodArgumentTypeMismatchException ex) {
         return ResponseEntity.badRequest()
-                .body(new ApiError("CHAMP_MANQUANT", "Paramètre invalide : " + ex.getName()));
+                .body(new ApiError("PARAMETRE_INVALIDE", "Paramètre invalide : " + ex.getName()));
+    }
+
+    /** Verb not supported on this route → 405 METHODE_NON_AUTORISEE. */
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ApiError> onMethodNotAllowed(HttpRequestMethodNotSupportedException ex) {
+        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED)
+                .body(new ApiError("METHODE_NON_AUTORISEE", "Méthode non autorisée : " + ex.getMethod()));
+    }
+
+    /** Body that is not JSON → 415 TYPE_NON_SUPPORTE. */
+    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+    public ResponseEntity<ApiError> onUnsupportedMediaType(HttpMediaTypeNotSupportedException ex) {
+        return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
+                .body(new ApiError("TYPE_NON_SUPPORTE", "Le corps de la requête doit être au format JSON."));
     }
 
     /** Missing required query parameter → 400 PARAMETRE_MANQUANT (never a 500). */

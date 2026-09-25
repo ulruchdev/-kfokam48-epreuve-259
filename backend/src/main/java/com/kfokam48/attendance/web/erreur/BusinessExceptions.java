@@ -14,14 +14,11 @@ public final class BusinessExceptions {
         public PromotionUnknownException(Long id) {
             super("PROMOTION_INCONNUE", HttpStatus.NOT_FOUND, "La promotion " + id + " est inconnue.");
         }
-        public PromotionUnknownException(HttpStatus status, Long id) {
-            super("PROMOTION_INCONNUE", status, "La promotion " + id + " est inconnue.");
-        }
     }
 
     public static class StudentUnknownException extends ApiException {
         public StudentUnknownException(Long id) {
-            super("ETUDIANT_INCONNU", HttpStatus.BAD_REQUEST, "L'étudiant " + id + " est inconnu.");
+            super("ETUDIANT_INCONNU", HttpStatus.NOT_FOUND, "L'étudiant " + id + " est inconnu.");
         }
     }
 
@@ -31,10 +28,10 @@ public final class BusinessExceptions {
         }
     }
 
-    /** RG3 (Q4): carried by the imposed 400 status (B2: no new status on an imposed operation). */
+    /** RG3 (Q4): five wrong codes lock the student for two minutes — 429 Too Many Requests. */
     public static class TooManyAttemptsException extends ApiException {
         public TooManyAttemptsException() {
-            super("TOO_MANY_ATTEMPTS", HttpStatus.BAD_REQUEST,
+            super("TOO_MANY_ATTEMPTS", HttpStatus.TOO_MANY_REQUESTS,
                     "Trop de tentatives : nouvel essai possible dans deux minutes.");
         }
     }
@@ -59,8 +56,8 @@ public final class BusinessExceptions {
     }
 
     public static class SessionClosedException extends ApiException {
-        public SessionClosedException(HttpStatus status) {
-            super("SESSION_CLOTUREE", status, "La session est clôturée : opération refusée.");
+        public SessionClosedException() {
+            super("SESSION_CLOTUREE", HttpStatus.CONFLICT, "La session est clôturée : opération refusée.");
         }
     }
 
