@@ -230,6 +230,9 @@ paths:
                     exercicesDeposes: { type: integer }
                     moyenne: { type: number, nullable: true }
                     relecturesEnAttente: { type: integer }
+                    presencesFormateur:
+                      type: integer
+                      description: "Extension additive (EF7, Q14) : présences ajoutées à la main par le formateur, incluses dans presences." 
         "404": { $ref: "#/components/responses/Erreur" }   # PROMOTION_INCONNUE
 
   # ===================== ENDPOINTS LIBRES =====================
