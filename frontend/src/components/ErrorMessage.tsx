@@ -1,5 +1,6 @@
+import { AlertCircle } from 'lucide-react'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { ApiError } from '../api/http'
-import styles from './ErrorMessage.module.css'
 
 /** Shows the API's own `message` (French, imposed by the contract) — never a generic fallback. */
 export function ErrorMessage({ error }: { error: unknown }) {
@@ -11,8 +12,9 @@ export function ErrorMessage({ error }: { error: unknown }) {
         : "Une erreur inattendue s'est produite."
 
   return (
-    <p className={styles.error} role="alert">
-      {message}
-    </p>
+    <Alert variant="destructive">
+      <AlertCircle className="size-4" />
+      <AlertDescription>{message}</AlertDescription>
+    </Alert>
   )
 }

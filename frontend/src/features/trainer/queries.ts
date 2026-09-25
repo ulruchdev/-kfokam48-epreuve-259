@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { listStudents } from '../../api/promotions'
 import { addManualPresence } from '../../api/presences'
-import { closeSession, listSessions, openSession, type OpenSessionInput } from '../../api/sessions'
+import { closeSession, getSession, listSessions, openSession, type OpenSessionInput } from '../../api/sessions'
 import { getTableau } from '../../api/dashboard'
 
 export function useTrainerStudents(promotionId: number) {
@@ -15,6 +15,15 @@ export function useSessions(promotionId: number) {
   return useQuery({
     queryKey: ['sessions', promotionId],
     queryFn: () => listSessions(promotionId),
+  })
+}
+
+/** GET /api/sessions/{id} now returns the code too: used to recover a reopened session (US-40). */
+export function useSessionDetail(sessionId: number | undefined) {
+  return useQuery({
+    queryKey: ['session-detail', sessionId],
+    queryFn: () => getSession(sessionId as number),
+    enabled: sessionId !== undefined,
   })
 }
 

@@ -1,9 +1,16 @@
 import { useState } from 'react'
-import { ErrorMessage } from '../../components/ErrorMessage'
-import { Loading } from '../../components/Loading'
+import { toast } from 'sonner'
+import { AlertCircle } from 'lucide-react'
+
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Skeleton } from '@/components/ui/skeleton'
 import { useIdentityStore } from '../../stores/identityStore'
 import { useMarkPresence, useMyExercises, useReplaceExerciseLink, useSubmitExercise } from './queries'
-import styles from './StudentHome.module.css'
 
 const statutLabel: Record<string, string> = {
   EN_ATTENTE_AFFECTATION: 'En attente d’affectation',
@@ -14,11 +21,12 @@ const statutLabel: Record<string, string> = {
 /** EF2, EF3/EF12, EF9 (RG7: never the reviewer's name) — the three ENF1 mobile-critical screens. */
 export function StudentHome() {
   const identity = useIdentityStore((state) => state.identity)!
+  const etudiantId = identity.etudiantId!
 
   const markPresence = useMarkPresence()
-  const submitExercise = useSubmitExercise(identity.etudiantId)
-  const replaceLink = useReplaceExerciseLink(identity.etudiantId)
-  const myExercises = useMyExercises(identity.etudiantId)
+  const submitExercise = useSubmitExercise(etudiantId)
+  const replaceLink = useReplaceExerciseLink(etudiantId)
+  const myExercises = useMyExercises(etudiantId)
 
   const [code, setCode] = useState('')
   const [markedSessionId, setMarkedSessionId] = useState<number | null>(null)
@@ -29,20 +37,28 @@ export function StudentHome() {
   function handleMarkPresence() {
     if (!code.trim()) return
     markPresence.mutate(
-      { code: code.trim(), etudiantId: identity.etudiantId },
-      { onSuccess: (data) => setMarkedSessionId(data.sessionId) },
+      { code: code.trim(), etudiantId },
+      {
+        onSuccess: (data) => {
+          setMarkedSessionId(data.sessionId)
+          toast.success('Présence enregistrée.')
+        },
+        onError: (error) => toast.error(error.message),
+      },
     )
   }
 
   function handleDeposit() {
     if (!link.trim() || markedSessionId === null) return
     submitExercise.mutate(
-      { sessionId: markedSessionId, etudiantId: identity.etudiantId, lien: link.trim() },
+      { sessionId: markedSessionId, etudiantId, lien: link.trim() },
       {
         onSuccess: (data) => {
           setSubmittedExerciseId(data.id)
           setDepositFeedback('Exercice déposé.')
+          toast.success('Exercice déposé.')
         },
+        onError: (error) => toast.error(error.message),
       },
     )
   }
@@ -51,7 +67,13 @@ export function StudentHome() {
     if (!link.trim() || submittedExerciseId === null) return
     replaceLink.mutate(
       { id: submittedExerciseId, lien: link.trim() },
-      { onSuccess: () => setDepositFeedback('Lien remplacé.') },
+      {
+        onSuccess: () => {
+          setDepositFeedback('Lien remplacé.')
+          toast.success('Lien remplacé.')
+        },
+        onError: (error) => toast.error(error.message),
+      },
     )
   }
 
@@ -59,89 +81,119 @@ export function StudentHome() {
   const depositPending = submitExercise.isPending || replaceLink.isPending
 
   return (
-    <section className={styles.screen}>
-      <h1>Espace étudiant</h1>
+    <section className="mx-auto flex w-full max-w-sm flex-col gap-6 pb-16 sm:max-w-xl">
+      <h1 className="text-2xl font-semibold">Espace étudiant</h1>
 
-      <div className={styles.block}>
-        <h2>Ma présence</h2>
-        <label htmlFor="attendance-code" className={styles.label}>
-          Code de la séance
-        </label>
-        <div className={styles.row}>
-          <input
-            id="attendance-code"
-            className={styles.input}
-            value={code}
-            onChange={(event) => setCode(event.target.value)}
-            placeholder="Ex. AB12CD"
-            autoComplete="off"
-          />
-          <button
-            type="button"
-            onClick={handleMarkPresence}
-            disabled={!code.trim() || markPresence.isPending}
-          >
-            Valider ma présence
-          </button>
-        </div>
-        {markedSessionId !== null && (
-          <p className={styles.confirmation} data-testid="attendance-confirmation">
-            Présence enregistrée.
-          </p>
-        )}
-        {markPresence.isError && <ErrorMessage error={markPresence.error} />}
-      </div>
-
-      {markedSessionId !== null && (
-        <div className={styles.block}>
-          <h2>Mon exercice</h2>
-          <label htmlFor="exercise-link" className={styles.label}>
-            Lien de l'exercice
-          </label>
-          <div className={styles.row}>
-            <input
-              id="exercise-link"
-              className={styles.input}
-              value={link}
-              onChange={(event) => setLink(event.target.value)}
-              placeholder="https://…"
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Ma présence</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-2">
+          <Label htmlFor="attendance-code">Code de la séance</Label>
+          <div className="flex flex-wrap gap-2">
+            <Input
+              id="attendance-code"
+              className="flex-1 min-w-0"
+              value={code}
+              onChange={(event) => setCode(event.target.value)}
+              placeholder="Ex. AB12CD"
               autoComplete="off"
             />
-            <button
-              type="button"
-              onClick={submittedExerciseId === null ? handleDeposit : handleReplace}
-              disabled={!link.trim() || depositPending}
-            >
-              {submittedExerciseId === null ? 'Déposer mon exercice' : 'Remplacer le lien'}
-            </button>
+            <Button onClick={handleMarkPresence} disabled={!code.trim() || markPresence.isPending}>
+              Valider ma présence
+            </Button>
           </div>
-          {depositFeedback && (
-            <p className={styles.confirmation} data-testid="deposit-confirmation">
-              {depositFeedback}
+          {markedSessionId !== null && (
+            <p className="text-sm font-medium text-pine" data-testid="attendance-confirmation">
+              Présence enregistrée.
             </p>
           )}
-          {depositError && <ErrorMessage error={depositError} />}
-        </div>
+          {markPresence.isError && (
+            <Alert variant="destructive">
+              <AlertCircle className="size-4" />
+              <AlertDescription>{markPresence.error.message}</AlertDescription>
+            </Alert>
+          )}
+        </CardContent>
+      </Card>
+
+      {markedSessionId !== null && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Mon exercice</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-2">
+            <Label htmlFor="exercise-link">Lien de l'exercice</Label>
+            <div className="flex flex-wrap gap-2">
+              <Input
+                id="exercise-link"
+                className="flex-1 min-w-0"
+                value={link}
+                onChange={(event) => setLink(event.target.value)}
+                placeholder="https://…"
+                autoComplete="off"
+              />
+              <Button
+                variant="secondary"
+                onClick={submittedExerciseId === null ? handleDeposit : handleReplace}
+                disabled={!link.trim() || depositPending}
+              >
+                {submittedExerciseId === null ? 'Déposer mon exercice' : 'Remplacer le lien'}
+              </Button>
+            </div>
+            {depositFeedback && (
+              <p className="text-sm font-medium text-pine" data-testid="deposit-confirmation">
+                {depositFeedback}
+              </p>
+            )}
+            {depositError && (
+              <Alert variant="destructive">
+                <AlertCircle className="size-4" />
+                <AlertDescription>{depositError.message}</AlertDescription>
+              </Alert>
+            )}
+          </CardContent>
+        </Card>
       )}
 
-      <div className={styles.block}>
-        <h2>Mes exercices</h2>
-        {myExercises.isLoading && <Loading label="Chargement de vos exercices…" />}
-        {myExercises.isError && <ErrorMessage error={myExercises.error} />}
+      <div className="flex flex-col gap-3">
+        <h2 className="text-lg font-semibold">Mes exercices</h2>
+        {myExercises.isLoading && (
+          <div className="flex flex-col gap-2">
+            <Skeleton className="h-16 w-full" />
+            <Skeleton className="h-16 w-full" />
+          </div>
+        )}
+        {myExercises.isError && (
+          <Alert variant="destructive">
+            <AlertCircle className="size-4" />
+            <AlertDescription>{myExercises.error.message}</AlertDescription>
+          </Alert>
+        )}
         {myExercises.data && (
-          <ul className={styles.list}>
+          <ul className="flex flex-col gap-3">
             {myExercises.data.map((exercice) => (
-              <li key={exercice.id} className={styles.card}>
-                <p className={styles.cardLink}>{exercice.lien}</p>
-                <p className={styles.cardStatut}>{statutLabel[exercice.statut]}</p>
-                {exercice.relecture ? (
-                  <div className={styles.grade}>
-                    <span className={styles.gradeValue}>{exercice.relecture.note}/20</span>
-                    <p className={styles.gradeComment}>{exercice.relecture.commentaire}</p>
-                  </div>
-                ) : (
-                  <p className={styles.cardStatut}>En attente de relecture</p>
-                )}
+              <li key={exercice.id}>
+                <Card className="gap-2 py-4">
+                  <CardContent className="flex flex-col gap-1.5 px-4">
+                    <p className="break-words font-mono text-xs text-muted-foreground">
+                      {exercice.lien}
+                    </p>
+                    <Badge variant="outline" className="w-fit">
+                      {statutLabel[exercice.statut]}
+                    </Badge>
+                    {exercice.relecture ? (
+                      <div className="mt-1 border-t border-border pt-2">
+                        <span className="font-mono font-semibold text-ochre">
+                          {exercice.relecture.note}/20
+                        </span>
+                        <p className="mt-1 text-sm">{exercice.relecture.commentaire}</p>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">En attente de relecture</p>
+                    )}
+                  </CardContent>
+                </Card>
               </li>
             ))}
           </ul>
