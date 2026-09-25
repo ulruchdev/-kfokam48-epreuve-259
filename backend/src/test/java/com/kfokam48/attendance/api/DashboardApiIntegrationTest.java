@@ -27,12 +27,13 @@ class DashboardApiIntegrationTest extends AbstractPostgresIntegrationTest {
     @Autowired private ReviewRepository reviews;
 
     @Test
-    void should_return200_withTheSixImposedFields_forEveryStudent_EF6() {
+    void should_return200_withTheSixImposedFields_plusTrainerAttendance_forEveryStudent_EF6() {
         List<Map<String, Object>> rows = dashboard();
 
         assertThat(rows).hasSize(6);
         assertThat(rows).allSatisfy(row -> assertThat(row).containsOnlyKeys(
-                "etudiantId", "nom", "presences", "exercicesDeposes", "moyenne", "relecturesEnAttente"));
+                "etudiantId", "nom", "presences", "exercicesDeposes", "moyenne", "relecturesEnAttente",
+                "presencesFormateur"));
     }
 
     @Test
