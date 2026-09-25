@@ -25,7 +25,7 @@ class ExercisePersistenceIntegrationTest extends AbstractPostgresIntegrationTest
 
     @Test
     void should_persistEveryExerciseStatus_underTheSchemaCheckConstraint_D4() {
-        CourseSession session = sessions.save(openSession());
+        CourseSession session = sessions.save(newOpenSession());
 
         for (ExerciseStatus status : ExerciseStatus.values()) {
             Exercise saved = exercises.saveAndFlush(exercise(session.getId(), status));
@@ -35,7 +35,7 @@ class ExercisePersistenceIntegrationTest extends AbstractPostgresIntegrationTest
         }
     }
 
-    private CourseSession openSession() {
+    private CourseSession newOpenSession() {
         OffsetDateTime now = OffsetDateTime.now();
         CourseSession session = new CourseSession();
         session.setPromotionId(DEMO_PROMOTION_ID);
