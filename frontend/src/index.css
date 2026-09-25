@@ -1,0 +1,126 @@
+@import url('https://fonts.googleapis.com/css2?family=Bitter:wght@500;600;700&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap');
+
+:root {
+  /* Colour: a classroom register, not a SaaS dashboard. */
+  --ink: #1c2420;
+  --paper: #eef1ea;
+  --paper-raised: #f7f9f4;
+  --slate: #26332c;
+  --chalk: #f5f8f3;
+  --ochre: #a6711f;
+  --ochre-bg: #f3e6cd;
+  --pine: #2f6b4f;
+  --pine-bg: #dfeee3;
+  --brick: #9c3f30;
+  --brick-bg: #f5ded9;
+  --line: #cabf9d;
+
+  --font-display: 'Bitter', Georgia, 'Times New Roman', serif;
+  --font-body: 'Public Sans', -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'Courier New', monospace;
+
+  color-scheme: light;
+  color: var(--ink);
+  background: var(--paper);
+  font: 16px/1.5 var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --ink: #eef1ea;
+    --paper: #1a221d;
+    --paper-raised: #212b24;
+    --slate: #0f1512;
+    --chalk: #eef1ea;
+    --ochre: #d9a75a;
+    --ochre-bg: #3a2f18;
+    --pine: #6fbf95;
+    --pine-bg: #17301f;
+    --brick: #e08e7e;
+    --brick-bg: #3a1e18;
+    --line: #3a4238;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme='dark'] {
+  --ink: #eef1ea;
+  --paper: #1a221d;
+  --paper-raised: #212b24;
+  --slate: #0f1512;
+  --chalk: #eef1ea;
+  --ochre: #d9a75a;
+  --ochre-bg: #3a2f18;
+  --pine: #6fbf95;
+  --pine-bg: #17301f;
+  --brick: #e08e7e;
+  --brick-bg: #3a1e18;
+  --line: #3a4238;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  min-height: 100svh;
+}
+
+#root {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  line-height: 1.2;
+  margin: 0 0 0.5em;
+}
+
+h1 {
+  font-size: clamp(1.7rem, 1.3rem + 1.6vw, 2.4rem);
+}
+
+h2 {
+  font-size: clamp(1.25rem, 1.1rem + 0.6vw, 1.6rem);
+}
+
+p {
+  margin: 0 0 1em;
+  max-width: 62ch;
+}
+
+button,
+input,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+a {
+  color: var(--pine);
+}
+
+:focus-visible {
+  outline: 3px solid var(--ochre);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
