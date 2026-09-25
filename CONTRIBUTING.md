@@ -6,7 +6,8 @@ the repository history is part of the assessment.
 ## 1. Branching model
 
 - `main` is always healthy. Every change goes through a branch and a Pull Request.
-- **One branch per ticket (issue), one Pull Request per branch.**
+- **One branch per issue, one Pull Request per branch.** The words "ticket" and
+  "issue" mean the same thing; this project uses **issue** only.
 
 Branch naming:
 
@@ -19,13 +20,19 @@ Branch naming:
 
 ## 2. Issues
 
-- The backlog lives in GitHub issues. One issue = one user-visible result.
-- Every issue carries:
-  - acceptance criteria, verifiable, written as "When ... then ...";
-  - a priority: Must / Should / Could;
-  - a reference to the requirement (`EFx`) or business rule (`RGx`) it implements.
-- Branches and commits reference the issue: the commit message ends with `Closes #<n>`
-  so the issue closes automatically when the PR merges.
+Yes, you must create issues — they ARE the backlog. One issue = one user-visible
+result, described with:
+- a title stating a outcome ("As a trainer, I open a session..."),
+- acceptance criteria, verifiable, written as "When ... then ...";
+- a priority: Must / Should / Could;
+- a reference to the requirement (`EFx`) or business rule (`RGx`) it implements.
+
+Example of a complete issue: see #5 or #6 on the repository — actor, path,
+preconditions, field constraints, numbered business rules, nominal and alternative
+scenarios, postconditions, acceptance criteria, Definition of Done.
+
+Branches and commits reference the issue: the commit message ends with `Closes #4`
+(the issue number), so the issue closes automatically when the PR merges.
 
 ## 3. Commits
 
@@ -54,7 +61,10 @@ git commit --allow-empty -m "[JALON] v1.0"
 Rules:
 - `[JALON] analyse` is pushed **before the first code commit** (order in history is what counts).
 - Each milestone commit is pushed immediately. An unpushed milestone does not exist.
-- Nothing else is attached to these commits.
+- Nothing else is attached to these commits. There are exactly **three** milestones.
+- The repository-verification commit (from the LISEZ-MOI checklist) is a normal
+  chore commit named `chore: verification du depot` — it **never** carries a
+  `[JALON]` message, so it cannot be confused with a milestone.
 
 ## 5. Pull Requests
 

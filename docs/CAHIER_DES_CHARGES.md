@@ -190,22 +190,21 @@ tirage au sort du relecteur (RG6/RG15), calcul de la moyenne (EF6, F3).
 - `frontend/` — React (Vite, TypeScript), 3 écrans
 - `docker-compose.yml` + Dockerfiles — démarrage complet avec données de démo
 - Backlog : issues GitHub avec critères d'acceptation, priorités Must/Should/Could, renvois `EFx`/`RGx`
-- `CHANGELOG.md` à l'étape 4, `SOUMISSION.md` à l'étape 6
+- `CHANGELOG.md` à l'étape 4, `SOUMISSION.md` à l'étape 5
 
 ## 10. Démarche prévue
 
 1. **Étape 1 (celle-ci)** : contrat figé → issues du backlog créées → commit `[JALON] analyse` poussé **avant tout code**.
 2. **Étape 2 (v0.1)** : stories **Must** uniquement (EF1→EF10), une branche/issue, une PR/branche, Docker + migrations d'abord, TDD sur chaque règle RGx. Jalon `[JALON] v0.1` poussé.
-3. **Étape 3 (enveloppe)** : issue ouverte **avant** de coder, bug reproduit par test, migration versionnée, contrat et analyse mis à jour dans des commits qui le disent ; périmètre sacrifié explicité dans le JOURNAL.
+3. **Étape 3 (enveloppe)** : l'enveloppe contenant le bug signalé par le client et le changement de besoin se demande au **surveillant** une fois `[JALON] v0.1` poussé (il n'y a plus de script). Issue ouverte **avant** de coder, bug reproduit par test, migration versionnée, contrat et analyse mis à jour dans des commits qui le disent ; périmètre sacrifié explicité dans le JOURNAL.
 4. **Étape 4 (v1.0)** : stories Should restantes si le temps le permet, `CHANGELOG.md`, README testé depuis un clone vierge, jalon `[JALON] v1.0`.
-5. **Étape 5** : épreuve `git-lab` sur un dépôt séparé (`kfokam48-gitlab-259`), jamais mélangée au projet.
-6. **Étape 6** : `SOUMISSION.md` téléversé avec les deux hash complets, liens vérifiés en navigation privée — **avant 18h00**.
+5. **Étape 5 (soumission)** : `SOUMISSION.md` téléversé sur la plateforme avec le hash complet du commit final, lien vérifié en navigation privée — **avant 18h00**. L'épreuve Git sur dépôt fourni est supprimée (amendement du sujet) : un seul dépôt, cinq étapes.
 
 **Plan de repli si retard :** les stories **Should** (EF11–EF13) sont sacrifiées d'abord
 (avec le D4 bonus), jamais la mise à jour de l'analyse après l'enveloppe (3 pts) ni
 l'hygiène Git (15 pts) ni la soumission.
 
-**Definition of Done — un ticket est terminé quand :**
+**Definition of Done — une issue est terminée quand :**
 
 - ses critères d'acceptation sont vérifiables par un test ou une démonstration précise
 - l'entrée JOURNAL de l'étape 1 est complétée par la relecture qualité ci-dessus
@@ -222,3 +221,4 @@ l'hygiène Git (15 pts) ni la soumission.
 | Version | Quand | Ce qui a changé et pourquoi |
 |---|---|---|
 | 1 | 2026-09-25 | Version initiale (étape 1) — sera révisée après l'ouverture de l'enveloppe (étape 3) |
+| 2 | 2026-09-25 | Amendements du sujet : « ticket » devient « issue » partout ; commit de vérification du dépôt nommé `chore: verification du depot` (jamais un `[JALON]`) ; étape git-lab supprimée — cinq étapes, la soumission devient l'étape 5 ; l'enveloppe se demande au surveillant une fois `[JALON] v0.1` poussé |
