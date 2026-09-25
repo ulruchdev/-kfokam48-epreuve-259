@@ -11,6 +11,7 @@ import com.kfokam48.attendance.domain.ExerciseStatus;
 import com.kfokam48.attendance.repository.StudentRepository;
 import com.kfokam48.attendance.web.dto.Dto;
 import com.kfokam48.attendance.web.erreur.BusinessExceptions.*;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -67,7 +68,7 @@ public class AttendanceService {
         attendance.setStudentId(studentId);
         attendance.setSource(Source.ETUDIANT);
         attendance.setMarkedAt(OffsetDateTime.now());
-        attendance = attendances.save(attendance);
+        attendance = insertOnce(attendance);
 
         retryPendingAssignments(s.getId());               // RG15: new attendee may unblock
 
@@ -92,7 +93,7 @@ public class AttendanceService {
         attendance.setStudentId(studentId);
         attendance.setSource(Source.FORMATEUR);           // RG12: "il faut que ça se voie"
         attendance.setMarkedAt(OffsetDateTime.now());
-        attendance = attendances.save(attendance);
+        attendance = insertOnce(attendance);
 
         retryPendingAssignments(sessionId);
 
@@ -101,6 +102,18 @@ public class AttendanceService {
     }
 
     // ---------- private steps (one thing each — clean code) ----------
+
+    /**
+     * #59: two simultaneous requests for the same student both pass the existence check;
+     * UNIQUE (session_id, etudiant_id) rejects the second one, which is a 409, not a 500.
+     */
+    private Attendance insertOnce(Attendance attendance) {
+        try {
+            return attendances.saveAndFlush(attendance);
+        } catch (DataIntegrityViolationException alreadyInserted) {
+            throw new AlreadyPresentException();
+        }
+    }
 
     private boolean isLocked(Student student) {
         return student.getLockedUntil() != null

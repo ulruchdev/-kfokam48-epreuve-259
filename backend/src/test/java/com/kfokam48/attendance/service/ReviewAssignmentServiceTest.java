@@ -66,6 +66,7 @@ class ReviewAssignmentServiceTest {
     @Test
     void should_keepExercisePending_when_authorIsTheSoleAttendee_RG15() {
         Exercise exercise = pendingExercise(1L, 5L);            // author = student 5
+        when(exercises.lockAndReadStatus(10L)).thenReturn("EN_ATTENTE_AFFECTATION");
         when(attendances.findBySessionId(1L)).thenReturn(List.of(attendee(1L, 5L)));
 
         service.tryAssign(exercise);
@@ -77,6 +78,7 @@ class ReviewAssignmentServiceTest {
     @Test
     void should_assignExactlyOneReviewer_amongAttendees_excludingTheAuthor_RG5_RG6_RG4() {
         Exercise exercise = pendingExercise(1L, 5L);            // author = 5
+        when(exercises.lockAndReadStatus(10L)).thenReturn("EN_ATTENTE_AFFECTATION");
         when(attendances.findBySessionId(1L)).thenReturn(
                 List.of(attendee(1L, 5L), attendee(1L, 6L), attendee(1L, 7L)));
         when(reviews.findByReviewerId(any())).thenReturn(List.of());   // everybody unloaded
@@ -89,6 +91,17 @@ class ReviewAssignmentServiceTest {
         verify(reviews, times(1)).save(captor.capture());        // RG5: exactly one review row
         Long drawn = captor.getValue().getReviewerId();
         assertThat(drawn).isIn(6L, 7L);                          // RG6/RG4: attendees, author excluded
+        assertThat(exercise.getStatus()).isEqualTo(ExerciseStatus.PENDING_REVIEW);
+    }
+
+    @Test
+    void should_skipAssignment_when_anotherTransactionAssignedItMeanwhile_issue59() {
+        Exercise exercise = pendingExercise(1L, 5L);
+        when(exercises.lockAndReadStatus(10L)).thenReturn("EN_ATTENTE_RELECTURE");
+
+        service.tryAssign(exercise);
+
+        verify(reviews, never()).save(any());
         assertThat(exercise.getStatus()).isEqualTo(ExerciseStatus.PENDING_REVIEW);
     }
 
