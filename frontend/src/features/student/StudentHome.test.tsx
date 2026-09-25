@@ -86,17 +86,28 @@ test('should_submit_then_replace_exercise_link_EF3_EF12', async () => {
   })
 })
 
-test('should_list_my_exercises_with_grade_and_never_a_reviewer_name_EF9_RG7', async () => {
+test('should_show_the_final_retained_grade_and_both_comments_never_a_reviewer_RG16_RG7', async () => {
   renderStudent()
 
-  const gradedExercise = demoMyExercises[0]!
-  const relecture = gradedExercise.relecture!
+  const final = demoMyExercises[0]!.evaluation!
   await waitFor(() => {
-    expect(screen.getByText(relecture.commentaire)).toBeInTheDocument()
+    expect(screen.getByText(final.commentaires[0]!)).toBeInTheDocument()
   })
-  expect(screen.getByText(`${relecture.note}/20`)).toBeInTheDocument()
+  expect(screen.getByText(final.commentaires[1]!)).toBeInTheDocument()
+  const finalCard = screen.getByTestId(`exercise-${demoMyExercises[0]!.id}`)
+  expect(finalCard).toHaveTextContent('13,5/20')
+  expect(finalCard).not.toHaveTextContent(/provisoire/i)
   expect(screen.queryByText('Nom Secret')).not.toBeInTheDocument()
   expect(document.body.textContent).not.toMatch(/relecteur/i)
+})
+
+test('should_mark_the_grade_provisional_while_only_one_review_is_rendered_RG16', async () => {
+  renderStudent()
+
+  const provisionalCard = await screen.findByTestId(`exercise-${demoMyExercises[1]!.id}`)
+  expect(provisionalCard).toHaveTextContent('12/20')
+  expect(provisionalCard).toHaveTextContent(/provisoire/i)
+  expect(screen.getByTestId(`exercise-${demoMyExercises[2]!.id}`)).toHaveTextContent(/en attente/i)
 })
 
 test('should_show_api_error_when_deposit_is_rejected_EF3', async () => {
