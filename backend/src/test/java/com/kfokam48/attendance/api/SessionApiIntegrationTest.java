@@ -51,10 +51,10 @@ class SessionApiIntegrationTest extends AbstractPostgresIntegrationTest {
     }
 
     @Test
-    void should_return400_PROMOTION_INCONNUE_when_promotionDoesNotExist() {
+    void should_return404_PROMOTION_INCONNUE_when_promotionDoesNotExist() {
         ResponseEntity<Map> response = open(Map.of("titre", "Ghost", "promotionId", 999));
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
         assertThat(response.getBody().get("code")).isEqualTo("PROMOTION_INCONNUE");
     }
 

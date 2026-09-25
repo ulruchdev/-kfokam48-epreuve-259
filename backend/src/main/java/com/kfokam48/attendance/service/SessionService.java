@@ -5,7 +5,6 @@ import com.kfokam48.attendance.repository.CourseSessionRepository;
 import com.kfokam48.attendance.repository.PromotionRepository;
 import com.kfokam48.attendance.web.dto.Dto;
 import com.kfokam48.attendance.web.erreur.BusinessExceptions.*;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -74,13 +73,13 @@ public class SessionService {
 
     private void requirePromotionExists(Long promotionId) {
         if (!promotions.existsById(promotionId)) {
-            throw new PromotionUnknownException(HttpStatus.BAD_REQUEST, promotionId);
+            throw new PromotionUnknownException(promotionId);
         }
     }
 
     private void requireSessionNotClosed(CourseSession session) {
         if (session.getStatus() == CourseSession.Status.CLOTUREE) {
-            throw new SessionClosedException(HttpStatus.CONFLICT);
+            throw new SessionClosedException();
         }
     }
 
