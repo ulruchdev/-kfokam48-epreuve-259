@@ -15,6 +15,9 @@ spring:
           time_zone: UTC
   flyway:
     enabled: true
+  jackson:
+    deserialization:
+      accept-float-as-int: false   # RG8: 12.5 must be rejected, never truncated to 12
 
 management:
   endpoints:
