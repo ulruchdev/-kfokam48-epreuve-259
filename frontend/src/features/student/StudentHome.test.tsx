@@ -90,10 +90,11 @@ test('should_list_my_exercises_with_grade_and_never_a_reviewer_name_EF9_RG7', as
   renderStudent()
 
   const gradedExercise = demoMyExercises[0]!
+  const relecture = gradedExercise.relecture!
   await waitFor(() => {
-    expect(screen.getByText(gradedExercise.relecture.commentaire)).toBeInTheDocument()
+    expect(screen.getByText(relecture.commentaire)).toBeInTheDocument()
   })
-  expect(screen.getByText(`${gradedExercise.relecture.note}/20`)).toBeInTheDocument()
+  expect(screen.getByText(`${relecture.note}/20`)).toBeInTheDocument()
   expect(screen.queryByText('Nom Secret')).not.toBeInTheDocument()
   expect(document.body.textContent).not.toMatch(/relecteur/i)
 })
