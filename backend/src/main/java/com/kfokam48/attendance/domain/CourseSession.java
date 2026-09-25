@@ -35,7 +35,7 @@ public class CourseSession {
     private OffsetDateTime endsAt;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name = "statut", nullable = false)
     private Status status = Status.OUVERTE;
 
     public Long getId() { return id; }

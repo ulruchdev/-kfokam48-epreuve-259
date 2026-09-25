@@ -20,8 +20,8 @@ public class Exercise {
     @Column(nullable = false)
     private String lien;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Convert(converter = ExerciseStatusConverter.class)
+    @Column(name = "statut", nullable = false)
     private ExerciseStatus status = ExerciseStatus.PENDING_ASSIGNMENT;
 
     @Column(name = "depose_a", nullable = false)
@@ -34,7 +34,7 @@ public class Exercise {
     public Long getStudentId() { return studentId; }
     public void setStudentId(Long studentId) { this.studentId = studentId; }
     public String getLien() { return lien; }
-    public void setLien(String lien) { this.lien =  lien; }
+    public void setLien(String lien) { this.lien = lien; }
     public ExerciseStatus getStatus() { return status; }
     public void setStatus(ExerciseStatus status) { this.status = status; }
     public OffsetDateTime getSubmittedAt() { return submittedAt; }
