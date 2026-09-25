@@ -34,8 +34,8 @@ conventional commits, three `[JALON]` milestone commits.
 - [x] Repository setup (.gitignore, workflow, API contract)
 - [x] Analysis & specification (cahier des charges, diagrams, backlog)
 - [x] v0.1 — Must features (backend, three screens, demo data, e2e)
-- [ ] Envelope (step 3)
-- [ ] v1.0 — final version
+- [x] Envelope (step 3): concurrency bug fixed, two reviewers per exercise
+- [x] v1.0 — final version (see CHANGELOG.md)
 
 ## Running
 
