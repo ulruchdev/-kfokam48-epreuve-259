@@ -51,3 +51,12 @@ Demo data is loaded by Flyway at startup (promotion 1, six students).
 | http://localhost:8080/contrat.yaml | The frozen contract as served by the backend |
 
 Every error body is `{"code", "message"}` with its real HTTP status (DEC-9 in the CDC).
+
+## End-to-end API check
+
+```bash
+scripts/api-smoke.sh                 # against http://localhost:8080 (docker compose up)
+```
+
+50 curl checks: every endpoint of the contract, nominal case and each error case with its
+HTTP status and error code, plus the RG7 view (grade visible, reviewer never exposed).
