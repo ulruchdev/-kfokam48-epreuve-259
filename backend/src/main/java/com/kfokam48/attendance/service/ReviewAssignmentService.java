@@ -32,10 +32,19 @@ public class ReviewAssignmentService {
         this.reviews = reviews;
     }
 
-    /** Try to assign a reviewer to one pending-assignment exercise. Idempotent. */
+    /**
+     * Try to assign a reviewer to one pending-assignment exercise. Idempotent and safe under
+     * concurrency (#59): the exercise row is locked and its status re-read from the database,
+     * so a second simultaneous attendance waits, then sees the exercise already assigned.
+     */
     @Transactional
     public void tryAssign(Exercise exercise) {
         if (exercise.getStatus() != ExerciseStatus.PENDING_ASSIGNMENT) return;
+        String currentStatus = exercises.lockAndReadStatus(exercise.getId());
+        if (!ExerciseStatus.PENDING_ASSIGNMENT.code().equals(currentStatus)) {
+            exercise.setStatus(ExerciseStatus.fromCode(currentStatus));
+            return;
+        }
 
         List<Long> attendeeIds = attendeeIdsOf(exercise.getSessionId());
 

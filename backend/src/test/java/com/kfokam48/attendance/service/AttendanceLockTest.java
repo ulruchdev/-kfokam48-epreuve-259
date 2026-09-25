@@ -119,7 +119,7 @@ class AttendanceLockTest {
         when(sessions.findByCodeAndStatusNot("ABC234", CourseSession.Status.CLOTUREE))
                 .thenReturn(Optional.of(openSession()));
         when(attendances.existsBySessionIdAndStudentId(any(), any())).thenReturn(false);
-        when(attendances.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(attendances.saveAndFlush(any())).thenAnswer(inv -> inv.getArgument(0));
         lenient().when(exercises.findBySessionIdAndStatus(any(), any())).thenReturn(java.util.List.of());
 
         service.mark("ABC234", studentId);

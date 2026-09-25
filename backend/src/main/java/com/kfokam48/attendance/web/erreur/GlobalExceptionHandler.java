@@ -3,6 +3,7 @@ package com.kfokam48.attendance.web.erreur;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -95,6 +96,15 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiError> onNoResource(NoResourceFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(new ApiError("RESSOURCE_INCONNUE", "Ressource inconnue."));
+    }
+
+    /** A constraint violation that escaped a service (concurrent write) → 409, never a 500 (#59). */
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ApiError> onConstraintViolation(DataIntegrityViolationException ex) {
+        log.warn("Conflit d'écriture concurrente", ex);
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ApiError("CONFLIT_CONCURRENT",
+                        "La ressource a été modifiée au même moment par une autre requête, réessayez."));
     }
 
     /** Last-resort guard: even unexpected errors match the imposed format. */
