@@ -14,4 +14,6 @@ public interface CourseSessionRepository extends JpaRepository<CourseSession, Lo
     Optional<CourseSession> findByCodeAndStatusNot(String code, CourseSession.Status status);
 
     boolean existsByCodeAndStatusNot(String code, CourseSession.Status status);
+
+    boolean existsByCodeAndStatus(String code, CourseSession.Status status);
 }
