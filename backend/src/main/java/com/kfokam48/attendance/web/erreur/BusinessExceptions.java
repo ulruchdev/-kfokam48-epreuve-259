@@ -139,6 +139,14 @@ public final class BusinessExceptions {
         }
     }
 
+    /** EF11: only a rendered review can be amended; the first submission is the POST. */
+    public static class ReviewNotRenderedException extends ApiException {
+        public ReviewNotRenderedException() {
+            super("RELECTURE_NON_RENDUE", HttpStatus.CONFLICT,
+                    "Cette relecture n'a pas encore été rendue : utilisez l'envoi initial.");
+        }
+    }
+
     /** RG8 (Q9): integer between 0 and 20. */
     public static class InvalidGradeException extends ApiException {
         public InvalidGradeException() {

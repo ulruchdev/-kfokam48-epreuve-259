@@ -55,7 +55,35 @@ public class ReviewService {
         exercises.save(exercise);
     }
 
+    /** EF11 / RG9 / DEC-1 (Q10 over Q15): a rendered review is amendable until closure. */
+    @Transactional
+    public Dto.ReviewResponse amend(Long reviewId, Dto.SubmitReviewRequest request) {
+        Review review = loadReview(reviewId);
+        Exercise exercise = loadExercise(review.getExerciseId());
+
+        if (request.relecteurId() != null) {
+            requireCallerIsAssignee(review, request.relecteurId());
+        }
+        requireRendered(review);
+        requireSessionNotClosed(exercise);
+
+        review.setNote(validGrade(request.note()));
+        review.setCommentaire(request.commentaire().trim());
+        review.setAmendedAt(OffsetDateTime.now());
+        review = reviews.save(review);
+
+        return new Dto.ReviewResponse(review.getId(), review.getExerciseId(), review.getReviewerId(),
+                review.getNote(), review.getCommentaire(), review.isRendered());
+    }
+
     // ---------- private steps ----------
+
+    private void requireRendered(Review review) {
+        if (!review.isRendered()) {
+            throw new ReviewNotRenderedException();
+        }
+    }
+
 
     private void requireCallerIsNotAuthor(Exercise exercise, Long callerId) {
         if (exercise.getStudentId().equals(callerId)) {

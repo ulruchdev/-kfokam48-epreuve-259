@@ -20,4 +20,10 @@ public class ReviewController {
     public void render(@PathVariable Long id, @Valid @RequestBody Dto.SubmitReviewRequest request) {
         reviewService.render(id, request);
     }
+
+    /** [LIBRE] PUT /api/relectures/{id} → 200 Relecture (EF11, RG9, DEC-1). */
+    @PutMapping("/relectures/{id}")
+    public Dto.ReviewResponse amend(@PathVariable Long id, @Valid @RequestBody Dto.SubmitReviewRequest request) {
+        return reviewService.amend(id, request);
+    }
 }
