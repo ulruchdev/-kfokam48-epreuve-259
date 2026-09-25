@@ -46,6 +46,16 @@ class AttendanceApiIntegrationTest extends AbstractPostgresIntegrationTest {
     }
 
     @Test
+    void should_return404_ETUDIANT_INCONNU_when_studentUnknown() {
+        Map<String, Object> session = openSession();
+
+        ResponseEntity<Map> response = markAttendance(session.get("code"), 999_999L);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(response.getBody().get("code")).isEqualTo("ETUDIANT_INCONNU");
+    }
+
+    @Test
     void should_lockStudent_evenWithValidCode_afterFiveWrongCodes_RG3() {
         Map<String, Object> session = openSession();
         for (int attempt = 0; attempt < 5; attempt++) {
@@ -54,7 +64,7 @@ class AttendanceApiIntegrationTest extends AbstractPostgresIntegrationTest {
 
         ResponseEntity<Map> response = markAttendance(session.get("code"), LOCKED_STUDENT_ID);
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS);
         assertThat(response.getBody().get("code")).isEqualTo("TOO_MANY_ATTEMPTS");
     }
 }
