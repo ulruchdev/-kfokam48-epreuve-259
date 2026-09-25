@@ -18,6 +18,9 @@ export default defineConfig({
     globals: true,
     setupFiles: ['./src/test/setup.ts'],
     css: true,
+    // Single-threaded pool: this machine has little RAM, forked workers time out.
+    pool: 'threads',
+    poolOptions: { threads: { singleThread: true } },
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html'],
