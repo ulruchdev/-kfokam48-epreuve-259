@@ -26,13 +26,13 @@ class ReviewApiIntegrationTest extends AbstractPostgresIntegrationTest {
     @Autowired private ReviewRepository reviews;
 
     @Test
-    void should_return200_andMarkExerciseRelu_when_assigneeRendersReview_EF5() {
+    void should_return200_andKeepExerciseAwaitingItsSecondReviewer_when_theOnlyAssigneeRenders_RG16() {
         Assignment a = assignedReview();
 
         ResponseEntity<Map> response = render(a.reviewId(), body(15, "Clean code", REVIEWER_ID));
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(statusOfExercises(a.sessionId())).containsExactly("RELU");
+        assertThat(statusOfExercises(a.sessionId())).containsExactly("EN_ATTENTE_AFFECTATION");
     }
 
     @Test

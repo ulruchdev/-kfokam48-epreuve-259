@@ -76,7 +76,7 @@ class ReviewAssignmentServiceTest {
     }
 
     @Test
-    void should_assignExactlyOneReviewer_amongAttendees_excludingTheAuthor_RG5_RG6_RG4() {
+    void should_assignTwoDistinctReviewers_amongAttendees_excludingTheAuthor_RG5_RG6_RG4() {
         Exercise exercise = pendingExercise(1L, 5L);            // author = 5
         when(exercises.lockAndReadStatus(10L)).thenReturn("EN_ATTENTE_AFFECTATION");
         when(attendances.findBySessionId(1L)).thenReturn(
@@ -88,9 +88,10 @@ class ReviewAssignmentServiceTest {
         service.tryAssign(exercise);
 
         ArgumentCaptor<Review> captor = ArgumentCaptor.forClass(Review.class);
-        verify(reviews, times(1)).save(captor.capture());        // RG5: exactly one review row
-        Long drawn = captor.getValue().getReviewerId();
-        assertThat(drawn).isIn(6L, 7L);                          // RG6/RG4: attendees, author excluded
+        verify(reviews, times(2)).save(captor.capture());        // RG5 revised: two review rows
+        assertThat(captor.getAllValues()).extracting(Review::getReviewerId)
+                .containsExactlyInAnyOrder(6L, 7L);              // RG6/RG4: attendees, author excluded, distinct
+        assertThat(captor.getAllValues()).extracting(Review::getRank).containsExactly((short) 1, (short) 2);
         assertThat(exercise.getStatus()).isEqualTo(ExerciseStatus.PENDING_REVIEW);
     }
 

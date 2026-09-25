@@ -33,7 +33,7 @@ class DashboardApiIntegrationTest extends AbstractPostgresIntegrationTest {
         assertThat(rows).hasSize(6);
         assertThat(rows).allSatisfy(row -> assertThat(row).containsOnlyKeys(
                 "etudiantId", "nom", "presences", "exercicesDeposes", "moyenne", "relecturesEnAttente",
-                "presencesFormateur"));
+                "presencesFormateur", "moyenneProvisoire"));
     }
 
     @Test
@@ -57,6 +57,7 @@ class DashboardApiIntegrationTest extends AbstractPostgresIntegrationTest {
 
         assertThat(delta(row(REVIEWER_ID), reviewerBefore, "relecturesEnAttente")).isZero();
         assertThat(row(AUTHOR_ID).get("moyenne")).isEqualTo(14.0);
+        assertThat(row(AUTHOR_ID).get("moyenneProvisoire")).isEqualTo(true);    // one reviewer only (RG16)
     }
 
     @Test
