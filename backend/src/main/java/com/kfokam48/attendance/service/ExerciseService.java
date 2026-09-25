@@ -66,6 +66,22 @@ public class ExerciseService {
         return new Dto.ExerciseSubmittedResponse(exercise.getId(), exercise.getStatus().code());
     }
 
+    /** EF12 / RG11 (Q13): the link is replaceable as long as no review has been rendered. */
+    @Transactional
+    public Dto.ExerciseResponse replaceLink(Long exerciseId, Dto.ReplaceLinkRequest request) {
+        requireValidLink(request.lien());
+        Exercise exercise = exercises.findById(exerciseId)
+                .orElseThrow(() -> new ExerciseUnknownException(exerciseId));
+        requireSessionNotClosed(loadSession(exercise.getSessionId()));
+        requireReviewNotStarted(exercise.getId());
+
+        exercise.setLien(request.lien().trim());
+        exercise = exercises.save(exercise);
+        String authorName = loadStudent(exercise.getStudentId()).getNom();
+        return new Dto.ExerciseResponse(exercise.getId(), exercise.getSessionId(), exercise.getStudentId(),
+                authorName, exercise.getLien(), exercise.getStatus().code());
+    }
+
     /** Trainer view: every exercise of a session with its author and status. */
     @Transactional(readOnly = true)
     public List<Dto.ExerciseResponse> listBySession(Long sessionId) {
@@ -121,6 +137,14 @@ public class ExerciseService {
     private void requireSessionNotClosed(CourseSession session) {
         if (session.getStatus() == CourseSession.Status.CLOTUREE) {
             throw new SessionClosedException();
+        }
+    }
+
+    /** RG11: a review has started once its reviewer has rendered it. */
+    private void requireReviewNotStarted(Long exerciseId) {
+        boolean started = reviews.findByExerciseIdIn(List.of(exerciseId)).stream().anyMatch(Review::isRendered);
+        if (started) {
+            throw new ReviewStartedException();
         }
     }
 

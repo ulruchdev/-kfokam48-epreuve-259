@@ -37,4 +37,10 @@ public class ExerciseController {
                                                                  @RequestParam(required = false) Long sessionId) {
         return exerciseService.listByStudent(etudiantId, sessionId);
     }
+
+    /** [LIBRE] PUT /api/exercices/{id} → 200 (EF12, RG11). */
+    @PutMapping("/exercices/{id}")
+    public Dto.ExerciseResponse replaceLink(@PathVariable Long id, @Valid @RequestBody Dto.ReplaceLinkRequest request) {
+        return exerciseService.replaceLink(id, request);
+    }
 }
