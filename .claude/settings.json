@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(./mvnw:*)",
+      "Bash(MAVEN_OPTS=-Xmx512m ./mvnw:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git branch:*)",
+      "Bash(git switch:*)",
+      "Bash(git checkout:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git show:*)",
+      "Bash(docker compose:*)",
+      "Bash(docker ps:*)",
+      "Bash(npm run:*)",
+      "Bash(npm ci)",
+      "Bash(npx vitest:*)"
+    ],
+    "deny": [
+      "Bash(git push --force:*)",
+      "Bash(git push -f:*)",
+      "Bash(git push origin main:*)",
+      "Bash(git reset --hard:*)",
+      "Bash(git commit -S:*)",
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(./backend/bin/**)",
+      "Read(./backend/target/**)",
+      "Read(./frontend/node_modules/**)",
+      "Read(./.kilo/**)",
+      "mcp__claude_ai_Google_Drive",
+      "mcp__claude_ai_Claude_Docs"
+    ]
+  },
+  "enableAllProjectMcpServers": false,
+  "env": {
+    "MAVEN_OPTS": "-Xmx512m"
+  }
+}
