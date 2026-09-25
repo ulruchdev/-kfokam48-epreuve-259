@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { formatAverage } from '../src/lib/format'
+import { formatAverage } from '../src/lib/format.js'
 import { pickIdentity } from './helpers.js'
 
 /**
