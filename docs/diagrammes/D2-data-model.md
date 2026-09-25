@@ -68,7 +68,7 @@ erDiagram
 | One review per exercise | `UNIQUE (exercice_id)` on RELECTURE | RG5 (Q6) |
 | Reviewer ≠ author | service check → `403 AUTO_RELECTURE` | RG4 (Q5) |
 | Reviewer among session attendees | service check at assignment | RG6 (Q7) |
-| Attendance before submission | service check → `400 PRESENCE_REQUISE` | RG14 (D4/H4) |
+| Attendance before submission | service check → `400 PRESENCE_REQUISE` | RG14 (DEC-4) |
 | Rate limit on wrong codes | failed-attempt counter per student, 5 → 2 min lock | RG3 (Q4) |
 | Link replaceable until review starts | service check → `409 RELECTURE_COMMENCEE` | RG11 (Q13) |
 | Session closure freezes changes | status check on all write paths | RG9/RG10 |
