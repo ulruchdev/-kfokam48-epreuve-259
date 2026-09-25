@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
@@ -51,6 +52,13 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiError> onTypeMismatch(MethodArgumentTypeMismatchException ex) {
         return ResponseEntity.badRequest()
                 .body(new ApiError("CHAMP_MANQUANT", "Paramètre invalide : " + ex.getName()));
+    }
+
+    /** Missing required query parameter → 400 PARAMETRE_MANQUANT (never a 500). */
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ApiError> onMissingParameter(MissingServletRequestParameterException ex) {
+        return ResponseEntity.badRequest()
+                .body(new ApiError("PARAMETRE_MANQUANT", "Paramètre manquant : " + ex.getParameterName()));
     }
 
     /** Unknown route → 404 in the imposed format. */
