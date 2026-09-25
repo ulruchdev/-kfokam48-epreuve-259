@@ -34,7 +34,20 @@ conventional commits, three `[JALON]` milestone commits.
 - [ ] Envelope (step 3)
 - [ ] v1.0 — final version
 
-## Running (planned)
+## Running
 
-Docker Compose startup instructions will be documented and tested from a clean
-clone before the v1.0 milestone.
+```bash
+docker compose up --build      # db (PostgreSQL 17) + backend on http://localhost:8080
+```
+
+Demo data is loaded by Flyway at startup (promotion 1, six students).
+
+## API documentation
+
+| URL | Content |
+|---|---|
+| http://localhost:8080/swagger-ui.html | Swagger UI — pick **Contrat figé** (the frozen `api/contrat.yaml`, source of truth) or **Généré depuis le code** |
+| http://localhost:8080/v3/api-docs | OpenAPI 3 document generated from the code |
+| http://localhost:8080/contrat.yaml | The frozen contract as served by the backend |
+
+Every error body is `{"code", "message"}` with its real HTTP status (DEC-9 in the CDC).

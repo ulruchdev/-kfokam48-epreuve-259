@@ -1,0 +1,5 @@
+# Root build context of the backend image: send only what it needs
+*
+!api/
+!backend/pom.xml
+!backend/src/

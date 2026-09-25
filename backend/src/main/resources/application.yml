@@ -19,6 +19,17 @@ spring:
     deserialization:
       accept-float-as-int: false   # RG8: 12.5 must be rejected, never truncated to 12
 
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    urls:
+      - name: "Contrat figé (api/contrat.yaml)"
+        url: /contrat.yaml
+      - name: "Généré depuis le code"
+        url: /v3/api-docs
+
 management:
   endpoints:
     web:
