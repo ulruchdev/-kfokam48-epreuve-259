@@ -24,6 +24,8 @@ export default defineConfig({
     {
       // npm run e2e:headed — a slower, visible run for watching the flow.
       name: 'chromium-headed',
+      // slowMo 400 ms on three browser contexts: the default 30 s is not enough to watch the flow
+      timeout: 180_000,
       use: {
         ...devices['Desktop Chrome'],
         headless: false,
