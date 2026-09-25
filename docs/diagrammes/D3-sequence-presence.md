@@ -29,7 +29,7 @@ sequenceDiagram
         C-->>F: 400 { code: "CODE_INCONNU", message: "..." }
     else locked out (RG3: 5 failures reached)
         C-->>F: 429 { code: "TOO_MANY_ATTEMPTS", message: "..." }
-    else code expired (RG1: 15 min after opening) or session ended (RG2)
+    else code expired (RG1: 15 min), session ended or closed (RG2)
         S-->>C: CodeExpireException
         C-->>F: 410 { code: "CODE_EXPIRE", message: "Le code de presence a expire." }
     else student already marked present
