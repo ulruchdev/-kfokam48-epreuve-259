@@ -36,8 +36,11 @@ public class AttendanceService {
         this.assignment = assignment;
     }
 
-    /** EF2 / RG1 / RG2 / RG3 / RG15 — the imposed POST /api/presences. */
-    @Transactional
+    /**
+     * EF2 / RG1 / RG2 / RG3 / RG15 — the imposed POST /api/presences.
+     * RG3: the failed-attempt counter must be committed even though CODE_INCONNU is thrown.
+     */
+    @Transactional(noRollbackFor = CodeUnknownException.class)
     public Dto.AttendanceResponse mark(String code, Long studentId) {
         Student student = students.findById(studentId)
                 .orElseThrow(() -> new StudentUnknownException(studentId));
